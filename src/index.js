@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 app.use(multer().any());
 
 mongoose.connect(
-    "mongodb+srv://shivani-0515:shivani0515@shivani.o6uy2fw.mongodb.net/shivani0507-DB?retryWrites=true&w=majority",
+    "mongodb+srv://shivani-0515:shivani0515@shivani.o6uy2fw.mongodb.net/shivani0507-DB",
     {
       useNewUrlParser: true,
     }
