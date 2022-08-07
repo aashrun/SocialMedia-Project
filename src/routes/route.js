@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const profileController = require("../controllers/profileController.js")
+const postController = require("../controllers/postController.js")
 
 
 
 
 //====================================  Profile Handlers  ======================================//
 router.post("/profile/register", profileController.createProfile)
+
+router.post("/profile/login", profileController.loginUser)
 
 
 //====================================  Invalid API  ==========================================//

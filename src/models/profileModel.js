@@ -16,14 +16,12 @@ const profileSchema = new mongoose.Schema({
     },
     DOB : {
         type : Date,
-        required : true,
-        min : 13
+        required : true
     },
     email : {
         type : String,
         required : true,
-        unique : true,
-        lowercase : true
+        unique : true
     },
     password : {
         type : String,
