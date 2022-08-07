@@ -178,7 +178,8 @@ const getProfile = async function(req,res){
 
 
         if(otherProfileId){
-        if (!idMatch(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a valid profile Id!"})
+        if (!isValid(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a profileId!"}) 
+        if (!idMatch(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId!"})
 
         let getProfileData = await profileModel.findOne({_id: otherProfileId, isDeleted:false})
         if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found!"})
@@ -207,7 +208,7 @@ const getProfile = async function(req,res){
         if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId!"})
 
         let getProfileData = await profileModel.findOne({_id: profileId, isDeleted:false})
-        if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found"})
+        if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found!"})
 
         let obj = {}
         obj["fullName"] = getProfileData["fullName"]
