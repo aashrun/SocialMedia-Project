@@ -19,5 +19,12 @@ const emailCheck = function (value) {
     return false;
 };
 
+const passwordRegex = (value) => {
+    let passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,15}$/
+    ;
+    if (passwordRegex.test(value))
+      return true;
+  }
 
-module.exports = {isValid, emptyBody, emailCheck}
+
+module.exports = {isValid, emptyBody, emailCheck, passwordRegex}

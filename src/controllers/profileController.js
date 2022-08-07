@@ -1,5 +1,5 @@
 const profileModel = require("../models/profileModel.js")
-const validation = require("../validations/validator.js")
+const {isValid, emptyBody, emailCheck, passwordRegex} = require("../validations/validator.js")
 
 
 
@@ -21,15 +21,15 @@ const loginUser = async function (req, res) {
         let { email, mobileNo, password } = req.body
 
       
-        if (!keyValue(req.body)) return res.status(400).send({ status: false, message: "Please provide login details!" })
+        if (!emptyBody(req.body)) return res.status(400).send({ status: false, message: "Please provide login details!" })
 
         
-        if (!objectValue(email)) return res.status(400).send({ status: false, message: "email is not present!" })
+        if (!isValid(email)) return res.status(400).send({ status: false, message: "email is not present!" })
        
         if (!emailRegex(email)) return res.status(400).send({ status: false, message: "email is invalid!" })
 
        
-        if (!objectValue(password)) return res.status(400).send({ status: false, message: "password is not present!" })
+        if (!isValid(password)) return res.status(400).send({ status: false, message: "password is not present!" })
        
         if (!passwordRegex(password)) return res.status(400).send({ status: false, message: "Password must be 8 to 15 characters and in alphabets and numbers only!" })                     
 
@@ -46,7 +46,6 @@ const loginUser = async function (req, res) {
       
         let token = jwt.sign(
             {
-               
                 userId: user._id.toString(),
                 group: "codeZinger",
                 project: "SocialMedia",
