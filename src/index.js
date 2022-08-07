@@ -9,11 +9,15 @@ app.use(bodyParser.json());
 app.use(multer().any());
 
 mongoose.connect(
-    "mongodb+srv://shivani-0515:shivani0515@shivani.o6uy2fw.mongodb.net/shivani0507-DB",
+    "mongodb+srv://Saswath1403:S%40swath9476@cluster0.fjep0.mongodb.net/SocialMedia-DB",
     {
       useNewUrlParser: true,
     }
   )
+
+
+
+  
   .then(() => console.log("MongoDb is connected."))
   .catch( err => console.log(err));
 
