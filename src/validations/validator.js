@@ -7,8 +7,12 @@ const isValid = function (value) {
     return true;
 };
 
-const emptyBody = function (data) {
-    return Object.keys(data).length > 0;
+const emptyBody = function (value) {
+    if (typeof value === "undefined" || value === null ) return false;
+    if (typeof value === "string" && value.trim().length === 0) return false;
+    if (typeof value === "object" && Object.keys(value).length === 0) return false;
+  
+    return true;
 };
 
 const emailCheck = function (value) {
@@ -17,5 +21,6 @@ const emailCheck = function (value) {
     }
     return false;
 };
+
 
 module.exports = {isValid, emptyBody, emailCheck}
