@@ -14,7 +14,11 @@ const createProfile = async function (req, res){
         if(!validation.isValid(fullName)) return res.status(400).send({status : false, message : "Invalid full name!"})
 
         if(!userName) return res.status(400).send({status : false, message : "Username is required!"})
-        let uniqueUsername = await
+        if(!validation.isValid(userName)) 
+        let uniqueUsername = await profileModel.findOne({userName : userName})
+        if(uniqueUsername) return res.status(409).send({status : false, message : "This username is already taken!"})
+
+
 
 
         

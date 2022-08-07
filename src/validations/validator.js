@@ -19,5 +19,11 @@ const emailCheck = function (value) {
     return false;
 };
 
+const isValidPassword = (password) => {
+    if ( password.length < 8 || password.length > 15) {
+        return false
+    }
+    return true
+}
 
-module.exports = {isValid, emptyBody, emailCheck}
+module.exports = {isValid, emptyBody, emailCheck, isValidPassword}
