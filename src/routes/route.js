@@ -11,6 +11,12 @@ router.post("/profile/register", profileController.createProfile)
 
 router.post("/profile/login", profileController.loginUser)
 
+router.get("/profile/:profileId/getProfileId", profileController.updateProfile)
+
+router.put("/profile/:profileId/update", profileController.updateProfile)
+
+router.delete("/profile/:profileId/delete", profileController.deleteProfile)
+
 
 //====================================  Invalid API  ==========================================//
 router.all("/**", function (req, res) {

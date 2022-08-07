@@ -13,11 +13,7 @@ mongoose.connect(
     {
       useNewUrlParser: true,
     }
-  )
-
-
-
-  
+  )  
   .then(() => console.log("MongoDb is connected."))
   .catch( err => console.log(err));
 

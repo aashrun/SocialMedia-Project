@@ -52,5 +52,11 @@ const userNameCheck = function (value) {
     return user
 };
 
-module.exports = {isValid, emptyBody, emailCheck, isValidPassword, idMatch, onlyNumbers, isValidMobileNum, profileImageCheck, userNameCheck}
+let isValidDateFormat = function (date) {
+    let dateFormatRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/
+
+    return dateFormatRegex.test(date)
+}
+
+module.exports = {isValid, emptyBody, emailCheck, isValidPassword, idMatch, onlyNumbers, isValidMobileNum, profileImageCheck, userNameCheck, isValidDateFormat}
 
