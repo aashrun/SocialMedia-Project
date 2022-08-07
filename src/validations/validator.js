@@ -19,6 +19,7 @@ const emailCheck = function (value) {
     return false;
 };
 
+<<<<<<< HEAD
 const isValidPassword = (password) => {
     if ( password.length < 8 || password.length > 15) {
         return false
@@ -27,3 +28,14 @@ const isValidPassword = (password) => {
 }
 
 module.exports = {isValid, emptyBody, emailCheck, isValidPassword}
+=======
+const passwordRegex = (value) => {
+    let passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,15}$/
+    ;
+    if (passwordRegex.test(value))
+      return true;
+  }
+
+
+module.exports = {isValid, emptyBody, emailCheck, passwordRegex}
+>>>>>>> cfc5fb8179c5c1186fb1233864cb7c6388edb70d
