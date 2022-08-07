@@ -169,7 +169,7 @@ const loginUser = async function (req, res) {
 
 
 
-
+//=======================================  Getting Profile Details  ====================================//
 
 const getProfile = async function(req,res){
     try{
@@ -181,7 +181,7 @@ const getProfile = async function(req,res){
         if (!idMatch(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a valid profile Id!"})
 
         let getProfileData = await profileModel.findOne({_id: otherProfileId, isDeleted:false})
-        if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found"})
+        if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found!"})
 
         let block = getProfileData.blockedAccs
         for(let i=0; i<block.length; i++){
@@ -204,7 +204,7 @@ const getProfile = async function(req,res){
         return res.status(200).send({ status: true, message: "Profile details", data: obj });
 
       }else{
-        if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profile Id!"})
+        if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId!"})
 
         let getProfileData = await profileModel.findOne({_id: profileId, isDeleted:false})
         if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found"})
