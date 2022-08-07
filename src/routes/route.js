@@ -11,7 +11,7 @@ router.post("/profile/register", profileController.createProfile)
 
 router.post("/profile/login", profileController.loginUser)
 
-router.get("/profile/:profileId/getProfileId", profileController.updateProfile)
+router.get("/profile/:profileId/getProfile", profileController.getProfile)
 
 router.put("/profile/:profileId/update", profileController.updateProfile)
 

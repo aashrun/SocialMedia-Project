@@ -335,7 +335,7 @@ const updateProfile = async function (req, res){
 
 
 
-
+//=====================================  Deleting a profile  ===================================//
 
 const deleteProfile = async function(req,res){
     try{
