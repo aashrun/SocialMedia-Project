@@ -348,10 +348,10 @@ const deleteProfile = async function(req,res){
     
         if(!idMatch(profileId))return res.status(400).send({ status: false, message: "Invalid profileId!" })
 
-        const Profile = await profileModel.findOneAndUpdate({ _id: profileId, isDeleted:false}, {isDeleted:true})      
+        const Profile = await profileModel.findOneAndUpdate({ _id: profileId, isDeleted:false}, {isDeleted:true, deletedAt: Date.now()})      
         if (!Profile) return res.status(404).send({ status: false, message: "No such profile found!" })
 
-         await postModel.updateMany({profileId: profileId, isDeleted: false}, {isDeleted: true})
+         await postModel.updateMany({profileId: profileId, isDeleted: false}, {isDeleted: true, deletedAt: Date.now()})
     
         return res.status(200).send({ status: true, message: "Profile deleted successfully!" })
 
