@@ -147,6 +147,9 @@ Profile Controller –
 
 
 Post Controller –
+
+
+
 12)	Create Post Api: post/create
 •	Create a post document from request body. Request body must contain image.
 •	Upload image to S3 bucket and save its public URL in user document.

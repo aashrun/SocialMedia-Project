@@ -18,6 +18,10 @@ router.put("/profile/:profileId/update", profileController.updateProfile)
 router.delete("/profile/:profileId/delete", profileController.deleteProfile)
 
 
+//====================================  Post Handlers  =========================================//
+router.post("/post/create", postController.createPost)
+
+
 //====================================  Invalid API  ==========================================//
 router.all("/**", function (req, res) {
     res.status(404).send({

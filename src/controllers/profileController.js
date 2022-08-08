@@ -1,4 +1,5 @@
 const profileModel = require("../models/profileModel.js")
+const postModel = require("../models/postModel.js")
 const bcrypt = require("bcrypt")
 const moment = require("moment")
 const upload = require('../aws/config.js')
