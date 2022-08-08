@@ -364,4 +364,148 @@ const deleteProfile = async function(req,res){
     }
 
 
-module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile}
+
+
+
+
+
+
+
+//=======================================  Following a profile  =========================================//
+
+const followProfile = async function (req, res){
+    try{
+        let profileId = req.params.profileId
+        let data = req.body
+        let personToFollow = data.profileId
+
+        if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
+        let profile = await profileModel.findOne({ _id: profileId, isDeleted:false})      
+       if (!profile) return res.status(404).send({ status: false, msg: "No such profile found" })
+
+
+        if(!emptyBody(data)) return res.status(400).send({status: false, message: "Please provide the profileId you want to follow!"})
+
+
+        if (!isValid(personToFollow)) return res.status(400).send({status: false, message: "Please enter a profileId!"}) 
+        if (!idMatch(personToFollow)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
+        let bodyProfileId = await profileModel.findOne({ _id: personToFollow, isDeleted:false})      
+       if (!bodyProfileId) return res.status(404).send({ status: false, msg: "The profile you wish to follow doesn't exist!" })
+
+
+       let alreadyFollowed = bodyProfileId.followerList
+       for(let j=0; j<alreadyFollowed.length; j++){
+        if(alreadyFollowed[j]._id == profileId){
+            return res.status(403).send({status: false, message: "You have already followed this profile!"})
+        }
+       }
+
+
+       let block = bodyProfileId.blockedAccs
+       for(let i=0; i<block.length; i++){
+        if(block[i]._id == profileId){
+            return res.status(403).send({status: false, message: "You cannot follow this profile because they have blocked you!"})
+        }
+       }
+
+       
+       let otherFollowerList = bodyProfileId.followerList
+       let ourFollowingList = profile.followingList
+
+       let ourObj = {}
+       ourObj["_id"] = profile["_id"]
+       ourObj["userName"] = profile["userName"]
+       ourObj["fullName"] = profile["fullName"]
+
+       otherFollowerList.push(ourObj)
+       bodyProfileId.followerCount += 1
+
+
+       let otherObj = {}
+       otherObj["_id"] = bodyProfileId["_id"]
+       otherObj["userName"] = bodyProfileId["userName"]
+       otherObj["fullName"] = bodyProfileId["fullName"]
+
+       ourFollowingList.push(otherObj)
+       profile.followingCount += 1
+
+       return res.status(200).send({status: true, message: `You're now following ${bodyProfileId.userName}`})
+
+
+    }catch(error){
+        return res.status(500).send({status: false, message: error.message})
+    }
+}
+
+
+
+
+
+
+
+
+
+
+//=========================================  Block a profile  =======================================//
+
+const blockProfile = async function(req,res){
+    try{
+
+    let userProfileId = req.params.profileId
+    let userToBeBLocked = req.body.profileId
+
+    let user = await profileModel.findOne({id_:userProfileId, isDeleted:false})
+    if(!user) return res.status(404).send({ status: false, message: " Profile Id doesnt exists " }) 
+
+    let blocked = await profileModel.findOne({id_:userToBeBLocked, isDeleted:false})
+    if(!blocked) return res.status(404).send({ status: false, message: "No such profile found!" })
+
+    let existingBlocked = user.blockedAccs
+    for (let i =0;i<existingBlocked.length;i++){
+      if(existingBlocked[i] == userToBeBLocked){
+          break;
+      }
+      return res.status(400).send({ status: false, message: "Profile already blocked" })
+
+    }
+    
+    let blockedData = {}
+    blockedData["fullName"] = blocked["fullName"]
+    blockedData["userName"] =blocked["userName"]
+    blockedData["profileId"] = blocked["_id"]
+
+    let blockArray  = user.blockedAccs
+    blockArray.push(blockedData)
+
+    let changedFollowerCount = user.followerCount -1
+
+    let followersArray = user.followerList
+    for(let i=0;i<followersArray.length;i++){
+    if(followersArray[i].profileId == userToBeBLocked){
+        followersArray.splice(i,1);
+        break;
+    }
+    }
+
+    let followingList = user.followingList
+     for(let i =0;i<followingList.length;i++){
+       if(followingList[i].profileId == userToBeBLocked){
+           followingList.splice(i,1)
+           let decrease = user.followingCount -1
+           let followingCount = decrease
+           break;
+       }
+     }
+
+     await profileModel.findOneAndUpdate({ _id: userProfileId}, {blockedAccs: blockArray, followerList: followersArray, followerCount: changedFollowerCount, followingList: followingList, followingCount: followingCount })  
+
+    return res.status(200).send({ status: true, message: "Profile blocked successfully!"})
+
+    }catch(err){
+        console.log("This is the error:", err.message)
+        return res.status(500).send({ status: false, message: err.message })
+    }
+    
+ }
+
+module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile}

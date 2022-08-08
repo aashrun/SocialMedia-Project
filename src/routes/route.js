@@ -18,6 +18,7 @@ router.put("/profile/:profileId/update", profileController.updateProfile)
 router.delete("/profile/:profileId/delete", profileController.deleteProfile)
 
 
+
 //====================================  Post Handlers  =========================================//
 router.post("/post/create", postController.createPost)
 
