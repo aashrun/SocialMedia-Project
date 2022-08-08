@@ -51,14 +51,8 @@ Profile Controller –
 
 
 
-
-
-
-
-
 6) Comment Api: profile/:profileId/comment
 •	Authentication and Authorization required
-•	Check if profileId exists in the db.
 •	Get postId and comment in the request body
 •	Check if postId exists in the db.
 •	You can comment on your own post, check if postId has your own profileId.
@@ -67,7 +61,6 @@ Profile Controller –
 •	If you exist in their blockedAccount’s array, you cannot comment.
 •	Make sure that the profileId exists/ isDeleted is false
 •	On success send 200, and send the appropriate status code if error persists.
-
 
 
 
@@ -82,11 +75,6 @@ Profile Controller –
 •	If you exist in their blockedAccount’s array, you cannot comment.
 •	Make sure that the profileId exists/ isDeleted is false
 •	On success send 200, and send the appropriate status code if error persists.
-
-
-
-
-
 
 
 8) Follow Api – profile/:profileId/follow
@@ -117,12 +105,14 @@ Profile Controller –
 •	Get the profileId of the person you want to block in the request body.
 •	Make sure that the 2nd person exists in the db, and isDeleted is false.
 •	Block the account by sending the request, the profileId of the blocked account gets added to you “blockedAccounts” key. 
-•	The blocked person now cannot access your profile or posts.
+•	The blocked person now cannot access your profile or posts. While blocking, make sure the 2nd person is removed from your followingList and followerList and bothe of them have a reduced count by 1. 
 •	On success send 200, and send the appropriate status code if error persists
+
 
 11) Unblock Api: profile/:profileId/unblock
 •	Authentication and Authorization is required.
 •	Make sure the profile exists in the db.
+•	Get the profileId of the person you want to block in the request body.
 •	Make sure the blocked Id exists in the db and isDeleted false.
 •	Splice the profileId of the blocked id from your blockedAccount’s array.
 •	Make sure they get to fetch your details after they get unblocked.
