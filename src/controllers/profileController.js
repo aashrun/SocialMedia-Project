@@ -179,7 +179,9 @@ const getProfile = async function(req,res){
 
         if(otherProfileId){
         if (!isValid(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a profileId!"}) 
-        if (!idMatch(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId!"})
+
+        if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
+        if (!idMatch(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in the body!"})
 
         let getProfileData = await profileModel.findOne({_id: otherProfileId, isDeleted:false})
         if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found!"})
@@ -201,8 +203,9 @@ const getProfile = async function(req,res){
         obj["bio"] = getProfileData["bio"]
         obj["profileImage"] = getProfileData["profileImage"]
 
-
         return res.status(200).send({ status: true, message: "Profile details", data: obj });
+
+
 
       }else{
         if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId!"})
@@ -224,10 +227,11 @@ const getProfile = async function(req,res){
       }
     }
     catch(error){
-        res.status(500).send({status:false,message:error.message})
+        res.status(500).send({status:false, message:error.message})
         console.log(error)
     }
 }
+
 
 
 
@@ -346,7 +350,7 @@ const deleteProfile = async function(req,res){
         const Profile = await profileModel.findOneAndUpdate({ _id: profileId, isDeleted:false}, {isDeleted:true})      
         if (!Profile) return res.status(404).send({ status: false, message: "No such profile found!" })
 
-         await postModel.updateMany({isDeleted: false}, {isDeleted: true})
+         await postModel.updateMany({profileId: profileId, isDeleted: false}, {isDeleted: true})
     
         return res.status(200).send({ status: true, message: "Profile deleted successfully!" })
 
