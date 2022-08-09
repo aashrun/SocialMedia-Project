@@ -446,6 +446,9 @@ const followProfile = async function (req, res){
 
 
 
+
+
+
 //=========================================  Block a profile  =======================================//
 
 const blockProfile = async function(req,res){
@@ -471,7 +474,7 @@ const blockProfile = async function(req,res){
     
     let blockedData = {}
     blockedData["fullName"] = blocked["fullName"]
-    blockedData["userName"] =blocked["userName"]
+    blockedData["userName"] = blocked["userName"]
     blockedData["profileId"] = blocked["_id"]
 
     let blockArray  = user.blockedAccs
@@ -508,4 +511,57 @@ const blockProfile = async function(req,res){
     
  }
 
+
+
+
+
+
+
+
+
+
+
+
+
+ const unblockProfile = async function(req,res){
+    try{
+
+    let userProfileId = req.params.profileId
+    let userTounBlock = req.body.profileId
+
+    let user = await profileModel.findOne({_id: userProfileId, isDeleted:false})
+    if(!user) return res.status(404).send({ status: false, message: "No such profile exist!" }) 
+
+    let unblock = await profileModel.findOne({_id: userTounBlock, isDeleted: false})
+    if(!unblock) return res.status(404).send({ status: false, message: "No such profile found!" })
+    
+    
+    let userBlockedAcc = user.blockedAccs
+
+    for(let i=0;i<userBlockedAcc.length;i++){
+        let obj = {}
+      if(userBlockedAcc[i].profileId == userTounBlock){
+         obj.push(userBlockedAcc[i])
+         break;
+      }
+      if(!emptyBody(obj) ){return res.status(400).send({ status: false, message: "This profile is not in blocked list" })}
+      
+      else if(userBlockedAcc[i].profileId == userTounBlock){
+        userBlockedAcc.splice(i,1)
+        break;
+      }
+
+    }
+
+
+     await profileModel.findOneAndUpdate({ _id: userProfileId}, {blockedAccs:userBlockedAcc})  
+
+    return res.status(200).send({ status: true, message: "Profile unblocked successfully! "})
+
+    }catch(err){
+        console.log("This is the error:", err.message)
+        return res.status(500).send({ status: false, message: err.message })
+    }
+    
+    }
 module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile}
