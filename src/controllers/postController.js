@@ -23,10 +23,11 @@ const createPost = async function (req, res){
 
 
         if(!files) return res.status(400).send({status: false, message: "An image is required to post something"})
-        // if (!profileImageCheck(files)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
 
         let uploadedFileURL = await upload.uploadFile(files[0])
         data.image = uploadedFileURL;
+        if (!profileImageCheck(files)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
+
 
         if(caption){
             if(!isValid(caption)) return res.status(400).send({status: false, message: "Invalid caption format!"})
@@ -44,11 +45,11 @@ const createPost = async function (req, res){
         let postData = uniqueProfileId.postData
 
         let obj = {}
-        obj["location"] = newPost["location"]
-        obj["image"] = newPost["image"]
-        obj["caption"] = newPost["caption"]
-        obj["likesCount"] = newPost["likesCount"]
-        obj["commentsCount"] = newPost["commentsCount"]
+        obj["Location"] = newPost["location"]
+        obj["Image"] = newPost["image"]
+        obj["Caption"] = newPost["caption"]
+        obj["Likes"] = newPost["likesCount"]
+        obj["Comments"] = newPost["commentsCount"]
         postData.push(obj)
 
         await profileModel.findOneAndUpdate({_id: profileId}, {postData: postData, postCount: count})
@@ -97,16 +98,16 @@ const getPost = async function (req,res){
 
         var obj = {}
         if(post.location){
-            obj["location"] = post["location"]
+            obj["Location"] = post["location"]
         }
        
-        obj["image"] = post["image"]
+        obj["Image"] = post["image"]
         
         if(post.caption){
-            obj["caption"] = post["caption"]
+            obj["Caption"] = post["caption"]
         }
-        obj["likes"] = post["likesCount"]
-        obj["comments"] = post["commentsCount"]
+        obj["Likes"] = post["likesCount"]
+        obj["Comments"] = post["commentsCount"]
 
         res.status(200).send({status: true, data: obj})
 

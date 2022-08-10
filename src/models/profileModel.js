@@ -18,6 +18,11 @@ const profileSchema = new mongoose.Schema({
         type : Date,
         required : true
     },
+    gender : {
+        type : String,
+        required : true,
+        enum : ["male", "female", "other"]
+    },
     email : {
         type : String,
         required : true,
@@ -32,7 +37,8 @@ const profileSchema = new mongoose.Schema({
         unique : true
     },
     profileImage :  {
-        type : String
+        type : String,
+        default : null
     },
     bio : {
         type : String

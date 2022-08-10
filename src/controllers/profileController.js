@@ -6,8 +6,6 @@ const upload = require('../aws/config.js')
 const jwt = require("jsonwebtoken");
 
 const {isValid, emptyBody, emailCheck, isValidPassword, idMatch, onlyNumbers, isValidMobileNum, profileImageCheck, userNameCheck, isValidDateFormat} = require("../validations/validator.js")
-const { LookoutEquipment } = require("aws-sdk")
-
 
 
 //=======================================  Creating a Profile  ======================================//
@@ -17,7 +15,7 @@ const createProfile = async function (req, res){
         let body = req.body
         if(!emptyBody(body)) return res.status(400).send({status : false, message : "Body cannot be empty!"})
 
-        let {fullName, userName, DOB, email, password, mobileNo, bio, location} = body
+        let {fullName, userName, DOB, email, gender, password, mobileNo, bio, location} = body
         let files = req.files
 
 
@@ -42,9 +40,13 @@ const createProfile = async function (req, res){
         let newAge = parseFloat(ans)
 
        if(newAge < 13) return res.status(403).send({status: false, message: "You're too young to join this Social Media platform!"})
+
+
+       if(!gender) return res.status(400).send({status: false, message: "Your gender is required!"})
+       if(!["male", "female", "other"].includes(gender)){
+        return res.status(400).send({status : false, msg : "Should include 'male', 'female' and 'other' only!"})
+    }
         
-
-
         if(!email) return res.status(400).send({status : false, message : "Email is required!"})
         if(!emailCheck(email)) return res.status(400).send({status: false, message: "Invalid email format!"})
         let uniqueEmail = await profileModel.findOne({email: email, isDeleted: false})
@@ -68,10 +70,11 @@ const createProfile = async function (req, res){
         
         if (files && files.length > 0) {
 
-        // if (!profileImageCheck(files)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
 
         let uploadedFileURL = await upload.uploadFile(files[0])
          body.profileImage = uploadedFileURL;
+         if (!profileImageCheck(body.profileImage)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
+
     }
 
 
@@ -253,7 +256,7 @@ const updateProfile = async function (req, res){
         let data = req.body
         let files = req.files
 
-        let {userName , fullName , password ,email, mobileNo , bio, location} = data     
+        let {userName , fullName , password ,email, gender, DOB, mobileNo , bio, location} = data     
         
 
        if(!emptyBody(data)) return res.status(400).send({ status: false, message: "Please provide some data for update" })
@@ -273,6 +276,18 @@ const updateProfile = async function (req, res){
       if (fullName) {
         if (!isValid(fullName)) return res.status(400).send({ status: false, message: "Invalid Full Name!" });
         fullName = fullName.trim().split(" ").filter(word => word).join(" ")
+    }
+
+    if(DOB) {
+        DOB = moment(DOB).format("YYYY-MM-DD")
+        if (!isValidDateFormat(DOB)) return res.status(400).send({ status: false, msg: "Wrong date format!" })
+      
+        let age = moment(DOB).fromNow(true)
+        let ageA = age.split(" ")
+        let ans = ageA[0]
+        let newAge = parseFloat(ans)
+
+       if(newAge < 13) return res.status(403).send({status: false, message: "The age you want to set is less than what the company's policy."})
     }
     
     if(password){
@@ -306,14 +321,23 @@ const updateProfile = async function (req, res){
 
         let uploadedFileURL = await upload.uploadFile(files[0])
         data.profileImage = uploadedFileURL
+        if (!profileImageCheck(data.profileImage)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
+
 
     }
     if(location){
         if(!isValid(location)) return res.status(400).send({status: false, message: "Please provide valid location.!"})
             location = location.trim().split(" ").filter(word => word).join(" ")
            
-
     }
+
+
+    if(gender){
+       if(!["male", "female", "other"].includes(gender)){
+        return res.status(400).send({status : false, msg : "Should include 'male', 'female' and 'other' only!"})
+    }
+}
+
 
     let updated = await profileModel.findOneAndUpdate({_id:profileId},data,{new:true})
 
@@ -327,7 +351,6 @@ const updateProfile = async function (req, res){
     response.postData = updated.postData
     response.bio = updated.bio 
     response.profileImage = updated.profileImage 
-    response.location = updated.location
 
     return res.status(200).send({status: true, message: "Profile updated succesfully", data: response})
 
@@ -346,33 +369,69 @@ const updateProfile = async function (req, res){
 
 //=====================================  Deleting a profile  ===================================//
 
-const deleteProfile = async function(req,res){
-    try{
-    let profileId = req.params.profileId
-    
-        if(!idMatch(profileId))return res.status(400).send({ status: false, message: "Invalid profileId!" })
+const deleteProfile = async function (req, res) {
+    try {
+        let profileId = req.params.profileId
 
-        const Profile = await profileModel.findOneAndUpdate({ _id: profileId, isDeleted:false}, {isDeleted:true, deletedAt: Date.now()})      
-        if (!Profile) return res.status(404).send({ status: false, message: "No such profile found!" })
+        if (!idMatch(profileId)) return res.status(400).send({ status: false, message: "Invalid profileId!" })
 
-         await postModel.updateMany({profileId: profileId, isDeleted: false}, {isDeleted: true, deletedAt: Date.now()})
+        let obj = {}
+        obj.profileImage = null
+        obj.followerCount = 0
+        obj.followingCount = 0
+        obj.followerList = []
+        obj.followingList = []
+        obj.postCount = 0
+        obj.postData = []
+        obj.blockedAccs = []
+        obj.isDeleted = false
+        obj.deletedAt = Date.now()
+        
+        // deleting profile
+        const deletedProfile = await profileModel.findOneAndUpdate({ _id: profileId, isDeleted: false },obj)
+        if (!deletedProfile) return res.status(404).send({ status: false, message: "No such profile found!" })
 
-    
-        return res.status(200).send({ status: true, message: "Profile deleted successfully!" })
+        //deleting all post of  profile
+        await postModel.updateMany({ profileId: profileId, isDeleted: false }, {isDeleted:true})
 
+        let allprofile = await profileModel.find()
 
-    }catch(err){
+       // deleting from other's following list
+
+        for (let i = 0; i < allprofile.length; i++) {
+            let followings = allprofile[i].followingList
+            for (let j = 0; j < followings.length; j++) {
+                if (followings[j]._id == profileId) {
+                    followings[j].splice(j, 1)
+                    followingCount = allprofile[i].followingCount - 1
+
+                    await profileModel.findOneAndUpdate({ _id: allprofile[i]._id }, { followingList: followings, followingCount: followingCount })
+                }
+            }
+        }
+        //deleting from other's followers list 
+
+        for (let i = 0; i < allprofile.length; i++) {
+            let followers = allprofile[i].followerList
+            for (let j = 0; j < followers.length; j++) {
+                if (followers[j]._id == profileId) {
+                    followers[j].splice(i, 1)
+                    followingCount = allprofile[i].followerCount - 1
+
+                    await profileModel.findOneAndUpdate({ _id: allprofile[i]._id }, { followerList: followers, followingCount: followingCount })
+                }
+            }
+        }
+        return res.status(200).send({ status: true, message: "Profile deleted successfully!", data: deleted })
+    } catch (err) {
         console.log("This is the error:", err.message)
         return res.status(500).send({ status: false, message: err.message })
     }
-    
-    }
+
+}
 
 
 
-
-// Sab kuch 0 ya empty karna hai
-//Find out all the users this user had followed or was followed by and reduce it by one (the count) and splice off the name from their respective lists.
 
 
 
@@ -572,45 +631,38 @@ const blockProfile = async function(req, res){
 
 //========================================  Unblocking a profile  =========================================//
 
- const unblockProfile = async function(req,res){
-    try{
+const unblockProfile = async function (req, res) {
+    try {
 
-    let userProfileId = req.params.profileId
-    let userTounBlock = req.body.profileId
+        let userProfileId = req.params.profileId
+        let userTounBlock = req.body.profileId
 
-    let user = await profileModel.findOne({_id: userProfileId, isDeleted:false})
-    if(!user) return res.status(404).send({ status: false, message: "No such profile exist!" }) 
+        if (userProfileId == userTounBlock) return res.status(400).send({ status: false, message: "Invalid request!" })
 
-    let unblock = await profileModel.findOne({_id: userTounBlock, isDeleted: false})
-    if(!unblock) return res.status(404).send({ status: false, message: "No such profile found!" })
-    
-    
-    let userBlockedAcc = user.blockedAccs
+        let user = await profileModel.findOne({ _id: userProfileId, isDeleted: false })
+        if (!user) return res.status(404).send({ status: false, message: "No such profile exist!" })
 
-    for(let i=0;i<userBlockedAcc.length;i++){
-        let obj = {}
-      if(userBlockedAcc[i].profileId == userTounBlock){
-         obj.push(userBlockedAcc[i])
-         break;
-      }
-      if(!emptyBody(obj) ){return res.status(400).send({ status: false, message: "This profile is not in blocked list" })}
-      
-      else if(userBlockedAcc[i].profileId == userTounBlock){
-        userBlockedAcc.splice(i,1)
-        break;
-      }
-
-    }
+        let unblock = await profileModel.findOne({ _id: userTounBlock, isDeleted: false })
+        if (!unblock) return res.status(404).send({ status: false, message: "No such profile found!" })
 
 
-     await profileModel.findOneAndUpdate({ _id: userProfileId}, {blockedAccs:userBlockedAcc})  
+        let userBlockedAcc = user.blockedAccs
 
-    return res.status(200).send({ status: true, message: "Profile unblocked successfully! "})
+        for (let i = 0; i < userBlockedAcc.length; i++) {
+            if (userBlockedAcc[i].profileId == userTounBlock) {
+                userBlockedAcc.splice(i, 1)
+                break;
+            } else { return res.status(404).send({ status: false, message: "you are not in blocked list" }) }
 
-    }catch(err){
+        }
+
+        await profileModel.findOneAndUpdate({ _id: userProfileId }, { blockedAccs: userBlockedAcc })
+
+        return res.status(200).send({ status: true, message: "Profile unblocked successfully! " })
+
+    } catch (err) {
         console.log("This is the error:", err.message)
         return res.status(500).send({ status: false, message: err.message })
     }
-    
-    }
+}
 module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile, unblockProfile}

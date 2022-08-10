@@ -21,8 +21,7 @@ const emailCheck = function (value) {
 
 
 const isValidPassword = (value) => {
-    let isValidPassword = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,15}$/
-    ;
+    let isValidPassword = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,15}$/;
     if (isValidPassword.test(value))
       return true;
   }
@@ -48,7 +47,7 @@ const profileImageCheck = function (value) {
 };
 
 const userNameCheck = function (value) {
-    let user = /^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$/ .test(value)
+    let user = /^[a-zA-Z0-9._]+$/ .test(value)
     return user
 };
 
