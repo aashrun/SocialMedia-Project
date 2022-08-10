@@ -146,7 +146,7 @@ Post Controller –
 •	Handle edge cases like extra spaces in captions.
 •	On success send 201, and send the appropriate status code if error persists.
 
-13)	Get Post Api: post/:postId
+13)	Get Post Api: post/:profileId/getPost/:postId
 •	Fetch data of a post. Authentication required.
 •	Make sure that profileId exists in the db.
 •	Make sure that the post exists in the db and isDeleted is false.
@@ -202,6 +202,8 @@ Post Controller –
 •	Check if post exists.
 •	Check if the post is of the same user as in the params.
 •	On success send 200, and send the appropriate status code if error persists.
+
+
 
 
 
