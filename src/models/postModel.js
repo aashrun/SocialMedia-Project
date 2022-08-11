@@ -5,8 +5,7 @@ const postSchema = new mongoose.Schema({
     profileId : {
         type : ObjectId,
         ref : "Profile",
-        required : true,
-        unique : true
+        required : true
     },
     image : {
         type : String,

@@ -111,58 +111,69 @@ const createProfile = async function (req, res){
 
 const loginUser = async function (req, res) {
     try {
+    let data = req.body
+    let {email, mobileNo, password} = data
 
-        let { email, mobileNo, password } = req.body
+    if(!emptyBody(data)) return res.status(400).send({status: false, message: "Please provide your credentials to log in."})
+
+    if(!(email || mobileNo)) return res.status(400).send({status: false, message: "Please provide your email or mobileNo to log in!"})
+    if(!password)  return res.status(400).send({status: false, message: "Please provide your password to log in!"})
+
+
+
+    if(email){
+        if(!isValid(email)) return res.status(400).send({status: false, message: "Email cannot be empty!"})
+        if(!emailCheck(email)) return res.status(400).send({status: false, message: "Invalid email!"})
+
+        let emailInDB = await profileModel.findOne({email: req.body.email, isDeleted: false})
+        if(!emailInDB) return res.status(404).send({status: false, message: "This email cannot be used to log in as it was not registered!"})
+
+        let passwordCheck = await bcrypt.compare(req.body.password, emailInDB.password)
+        if(!passwordCheck) return res.status(403).send({status: false, message: "Password provided is invalid!"})
         
-        if (!emptyBody(req.body)) return res.status(400).send({ status: false, message: "Please provide login details!" })
-
-
-        if (!(email || mobileNo)) return res.status(400).send({ status: false, message: "Please enter atleast mobile no. or email with password to login!" })
-
-
-        if (email && mobileNo) return res.status(400).send({ status: false, message: "Please enter only mobile number or email with password to login!" })
-
-
-        if (email) {
-            if (!isValid(email)) return res.status(400).send({ status: false, message: "Email is not present!" })
-
-            if (!emailCheck(email)) return res.status(400).send({ status: false, message: "Email is invalid!" })
-        }
-
-        if (mobileNo) {
-            if (!isValid(mobileNo)) return res.status(400).send({ status: false, message: "Mobile number is not present!" })
-
-            if (!isValidMobileNum(mobileNo)) return res.status(400).send({ status: false, message: "Mobile number is invalid!" })
-        }
-
-
-        if (!isValid(password)) return res.status(400).send({ status: false, message: "Password is not present!" })
-
-        if (!isValidPassword(password)) return res.status(400).send({ status: false, message: "Password must be 8 to 15 characters and in alphabets and numbers only!" })
-
-        let user = await profileModel.findOne({ email: email, mobileNo: mobileNo })
-        if (!(user.email || user.password)) return res.status(404).send({ status: false, message: `${email} ${mobileNo} is not present in the Database!` })
-
-        let passwordCheck = await bcrypt.compare(req.body.password, user.password)
-
-        if (!passwordCheck) return res.status(400).send({ status: false, message: "Password is not correct!" })
-
-
         let token = jwt.sign(
             {
-                userId: user._id.toString(),
+                profileId: emailInDB._id.toString(),
                 group: "codeZinger",
                 project: "SocialMedia",
                 iat: Math.floor(Date.now() / 1000),
                 exp: Math.floor(Date.now() / 1000) + 480 * 60 * 60
             },
-            "group01-project6"             
+            "Project-6"             
         )
 
+        res.status(200).send({status: true, message: "User logged in successfully!", data: {profileId: emailInDB._id, token: token}})
 
-        return res.status(200).send({ status: true, message: "User logged in successfully!", data: { userId: user._id, token } })
     }
-    catch (err) {
+
+    
+
+    if(mobileNo){
+        if(!isValid(mobileNo)) return res.status(400).send({status: false, message: "Mobile number cannot be empty!"})
+        if(!isValidMobileNum(mobileNo)) return res.status(400).send({status: false, message: "Invalid mobile number!"})
+
+        let mobileInDB = await profileModel.findOne({mobileNo: req.body.mobileNo, isDeleted: false})
+        if(!mobileInDB) return res.status(404).send({status: false, message: "This mobile number cannot be used to log in as it was not registered!"})
+
+        let passwordCheck = await bcrypt.compare(req.body.password, mobileInDB.password)
+        if(!passwordCheck) return res.status(403).send({status: false, message: "Password provided is invalid!"})
+        
+        let token = jwt.sign(
+            {
+                profileId: mobileInDB._id.toString(),
+                group: "codeZinger",
+                project: "SocialMedia",
+                iat: Math.floor(Date.now() / 1000),
+                exp: Math.floor(Date.now() / 1000) + 480 * 60 * 60
+            },
+            "Project-6"             
+        )
+
+        res.status(200).send({status: true, message: "User logged in successfully!", data: {profileId: mobileInDB._id, token: token}})
+
+    }
+
+    }catch (err) {
         console.log("This is the error:", err.message)
         return res.status(500).send({ status: false, message: err.message })
     }
@@ -238,6 +249,8 @@ const getProfile = async function(req,res){
         console.log(error)
     }
 }
+
+
 
 
 
@@ -384,7 +397,7 @@ const deleteProfile = async function (req, res) {
         obj.postCount = 0
         obj.postData = []
         obj.blockedAccs = []
-        obj.isDeleted = false
+        obj.isDeleted = true
         obj.deletedAt = Date.now()
         
         // deleting profile
@@ -402,7 +415,8 @@ const deleteProfile = async function (req, res) {
             let followings = allprofile[i].followingList
             for (let j = 0; j < followings.length; j++) {
                 if (followings[j]._id == profileId) {
-                    followings[j].splice(j, 1)
+                    
+                    followings.splice(j, 1)
                     followingCount = allprofile[i].followingCount - 1
 
                     await profileModel.findOneAndUpdate({ _id: allprofile[i]._id }, { followingList: followings, followingCount: followingCount })
@@ -415,14 +429,14 @@ const deleteProfile = async function (req, res) {
             let followers = allprofile[i].followerList
             for (let j = 0; j < followers.length; j++) {
                 if (followers[j]._id == profileId) {
-                    followers[j].splice(i, 1)
+                    followers.splice(i, 1)
                     followingCount = allprofile[i].followerCount - 1
 
                     await profileModel.findOneAndUpdate({ _id: allprofile[i]._id }, { followerList: followers, followingCount: followingCount })
                 }
             }
         }
-        return res.status(200).send({ status: true, message: "Profile deleted successfully!", data: deleted })
+        return res.status(200).send({ status: true, message: "Profile deleted successfully!", data: deletedProfile })
     } catch (err) {
         console.log("This is the error:", err.message)
         return res.status(500).send({ status: false, message: err.message })
@@ -446,6 +460,7 @@ const followProfile = async function (req, res){
         let profileId = req.params.profileId
         let data = req.body
         let personToFollow = data.profileId
+        
 
         if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
         let profile = await profileModel.findOne({ _id: profileId, isDeleted:false})      
@@ -456,9 +471,13 @@ const followProfile = async function (req, res){
 
 
         if (!isValid(personToFollow)) return res.status(400).send({status: false, message: "Please enter a profileId!"}) 
-        if (!idMatch(personToFollow)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
+        if (!idMatch(personToFollow)) return res.status(400).send({status: false, message: "Please enter a valid profileId in the body!"})
+
+        if(profileId == personToFollow) return  res.status(400).send({ status: false, message: "You cannot follow yourself, lol." }) 
+
         let bodyProfileId = await profileModel.findOne({ _id: personToFollow, isDeleted: false})      
        if (!bodyProfileId) return res.status(404).send({ status: false, msg: "The profile you wish to follow doesn't exist!" })
+       
 
 
        let alreadyFollowed = bodyProfileId.followerList
@@ -524,21 +543,25 @@ const followProfile = async function (req, res){
 
 const blockProfile = async function(req, res){
     try{
-
+        
     let userProfileId = req.params.profileId
     let userToBeBLocked = req.body.profileId
 
+   
+
     if(userProfileId == userToBeBLocked) return  res.status(400).send({ status: false, message: "You cannot block yourself lol." }) 
 
-    let user = await profileModel.findOne({id_:userProfileId, isDeleted:false})
+    let user = await profileModel.findOne({_id:userProfileId, isDeleted:false})
     if(!user) return res.status(404).send({ status: false, message: " ProfileId doesn't exist! " }) 
+    
 
-    let blocked = await profileModel.findOne({id_: userToBeBLocked, isDeleted:false})
+    let blocked = await profileModel.findOne({_id: userToBeBLocked, isDeleted:false})
     if(!blocked) return res.status(404).send({ status: false, message: "No such profile found!" })
+   
 
     let existingBlocked = user.blockedAccs
     for (let i =0;i<existingBlocked.length;i++){
-      if(existingBlocked[i] == userToBeBLocked){
+      if(existingBlocked[i]._id == userToBeBLocked){
           break;
       }
       return res.status(400).send({ status: false, message: "Profile already blocked!" })
@@ -548,21 +571,25 @@ const blockProfile = async function(req, res){
 
     let blockedData = {}
  
-    blockedData["profileId"] = blocked["_id"]
-    blockedData["userName"] = blocked["userName"]
-    blockedData["fullName"] = blocked["fullName"]
+
+    blockedData._id = userToBeBLocked
+    blockedData.userName = blocked.userName
+    blockedData.fullName = blocked.fullName
+    
     
 
     existingBlocked.push(blockedData)
-    update["blockedAccs"] =  blockedData
+    update["blockedAccs"] =  existingBlocked
    
 
     let followerList = user.followerList
     for(let i=0;i<followerList.length;i++){
-    if(followerList[i].profileId == userToBeBLocked){
+    if(followerList[i]._id == userToBeBLocked){
         followerList.splice(i,1);
-         var followerCount = user.followerCount -1
+        
+        var followerCount = user.followerCount -1
         break;
+       
     }
     update["followerList"] =  followerList
     update["followerCount"] = followerCount
@@ -570,23 +597,21 @@ const blockProfile = async function(req, res){
 
     let followingList = user.followingList
      for(let i =0; i<followingList.length; i++){
-       if(followingList[i].profileId == userToBeBLocked){
+       if(followingList[i]._id == userToBeBLocked){
            followingList.splice(i,1)
-           
-           var followingCount =  user.followingCount -1
+           var followingCount = user.followingCount - 1
            update["followingList"] =  followingList
            update["followingCount"] = followingCount
            break;
        }
      }
 
-
      await profileModel.findOneAndUpdate({ _id: userProfileId},update)  
 
      let update2 = {}
      let followerList2 = blocked.followerList
     for(let i=0;i<followerList2.length;i++){
-    if(followerList2[i].profileId == userProfileId){
+    if(followerList2[i]._id == userProfileId){
         followerList2.splice(i,1);
          var followerCount2 = blocked.followerCount -1
         break;
@@ -597,7 +622,7 @@ const blockProfile = async function(req, res){
 
     let followingList2 = blocked.followingList
      for(let i =0;i<followingList2.length;i++){
-       if(followingList2[i].profileId == userProfileId){
+       if(followingList2[i]._id == userProfileId){
            followingList2.splice(i,1)
            
            var followingCount2 =  blocked.followingCount -1
@@ -649,7 +674,7 @@ const unblockProfile = async function (req, res) {
         let userBlockedAcc = user.blockedAccs
 
         for (let i = 0; i < userBlockedAcc.length; i++) {
-            if (userBlockedAcc[i].profileId == userTounBlock) {
+            if (userBlockedAcc[i]._id == userTounBlock) {
                 userBlockedAcc.splice(i, 1)
                 break;
             } else { return res.status(404).send({ status: false, message: "you are not in blocked list" }) }
