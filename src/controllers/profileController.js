@@ -120,7 +120,6 @@ const loginUser = async function (req, res) {
     if(!password)  return res.status(400).send({status: false, message: "Please provide your password to log in!"})
 
 
-
     if(email){
         if(!isValid(email)) return res.status(400).send({status: false, message: "Email cannot be empty!"})
         if(!emailCheck(email)) return res.status(400).send({status: false, message: "Invalid email!"})
@@ -146,7 +145,7 @@ const loginUser = async function (req, res) {
 
     }
 
-    
+
 
     if(mobileNo){
         if(!isValid(mobileNo)) return res.status(400).send({status: false, message: "Mobile number cannot be empty!"})
@@ -690,4 +689,69 @@ const unblockProfile = async function (req, res) {
         return res.status(500).send({ status: false, message: err.message })
     }
 }
-module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile, unblockProfile}
+
+
+
+
+
+
+
+
+
+
+
+
+//================================= To post a comment  =================================//
+
+const commentOnPost = async function (req, res){
+    try{
+        let profileId = req.params.profileId
+        let data = req.body
+        let {postId, comment} = data
+
+        if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId!"})
+        let profileCheck = await profileModel.findOne({_id: profileId, isDeleted: false})
+        if(!profileCheck) return res.status(404).send({status: false, message: "This profile doesn't exist!"})
+
+        if(!emptyBody(data)) return res.status(400).send({status: false, message: "The request body cannot be empty!"})
+
+        if(!postId) return res.status(400).send({status: false, message: "Please provide the postId you wish to comment on!"})
+        if(!idMatch(postId)) return res.status(400).send({status: false, message: "Invalid postId!"})
+        let postCheck = await postModel.findOne({_id: postId, isDeleted: false})
+        if(!postCheck) return res.status(404).send({status: false, message: "This postId doesn't exist!"})
+
+        if(!comment) return res.status(400).send({status: false, message: " 'Comment' cannot be empty!"})
+        if(!isValid(comment)) return res.status(400).send({status: false, message: "Please provide with a comment!"})
+
+        let profileOfPost = await profileModel.findOne({_id: postCheck.profileId, isDeleted: false})
+        if(!profileOfPost) res.status(403).send({status: false, message: "The account owner of this post was not found or is deleted. "})
+
+        let block = profileOfPost.blockedAccs
+        for(let i=0; i<block.length; i++){
+            if(block[i]._id == profileId){
+                return res.status(403).send({status: false, message: `You cannot comment on ${profileOfPost.userName}'s post because they have blocked you!`})
+            }
+        }
+
+
+        let commentsCount = postCheck.commentsCount + 1
+        let commentsList = postCheck.commentsList
+
+        let obj = {}
+        obj["_id"] = profileId
+        obj["userName"] = profileCheck.userName
+        obj["Comment"] = comment
+        let newComment = commentsList.push(obj)
+
+        let finalData = await postModel.findOneAndUpdate({_id: postId}, {commentsCount: commentsCount, commentsList: newComment}, {new: true})
+        res.status(200).send({status: true, message: "Comment posted successfully!", data: finalData})
+
+
+
+
+
+    }catch(error){
+        res.status(500).send({status: false, message: error.message})
+    }
+}
+module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile, unblockProfile, commentOnPost}

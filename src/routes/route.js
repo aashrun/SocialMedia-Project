@@ -25,6 +25,8 @@ router.put("/profile/:profileId/block", profileController.blockProfile)
 
 router.put("/profile/:profileId/unblock", profileController.unblockProfile)
 
+router.put("/profile/:profileId/comment", profileController.commentOnPost)
+
 
 
 //====================================  Post Handlers  =========================================//
