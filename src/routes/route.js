@@ -13,28 +13,40 @@ router.post("/profile/register", profileController.createProfile)
 
 router.post("/profile/login", profileController.loginUser)
 
-router.get("/profile/:profileId/getProfile", profileController.getProfile)
+router.get("/profile/:profileId/getProfile", MW.authentication, MW.authorization, profileController.getProfile)
 
-router.put("/profile/:profileId/update", profileController.updateProfile)
+router.put("/profile/:profileId/update", MW.authentication, MW.authorization, profileController.updateProfile)
 
-router.delete("/profile/:profileId/delete", profileController.deleteProfile)
+router.delete("/profile/:profileId/delete", MW.authentication, MW.authorization, profileController.deleteProfile)
 
-router.put("/profile/:profileId/follow", profileController.followProfile)
+router.put("/profile/:profileId/follow", MW.authentication, MW.authorization, profileController.followProfile)
 
-router.put("/profile/:profileId/block", profileController.blockProfile)
+router.put("/profile/:profileId/block", MW.authentication, MW.authorization, profileController.blockProfile)
 
-router.put("/profile/:profileId/unblock", profileController.unblockProfile)
+router.put("/profile/:profileId/unblock", MW.authentication, MW.authorization, profileController.unblockProfile)
 
-router.put("/profile/:profileId/comment", profileController.commentOnPost)
+router.put("/profile/:profileId/comment", MW.authentication, MW.authorization, profileController.commentOnPost)
 
-router.put("/profile/:profileId/like", profileController.likePost)
+router.delete("/profile/:profileId/deleteComment", MW.authentication, MW.authorization, profileController.deleteComment)
 
-router.put("/profile/:profileId/unlike", profileController.unlikePost)
+router.put("/profile/:profileId/like", MW.authentication, MW.authorization, profileController.likePost)
+
+router.put("/profile/:profileId/unlike", MW.authentication, MW.authorization, profileController.unlikePost)
+
+
 
 //====================================  Post Handlers  =========================================//
-router.post("/post/create", postController.createPost)
+router.post("/post/create", MW.authentication, MW.authorization, postController.createPost)
 
-router.get("/post/:profileId/getPost/:postId", postController.getPost)
+router.get("/post/:profileId/getPost/:postId", MW.authentication, MW.authorization, postController.getPost)
+
+router.get("/post/:profileId/getLikesList/:postId", MW.authentication, MW.authorization, postController.getLikesList)
+
+router.get("/post/:profileId/getCommentsList/:postId", MW.authentication, MW.authorization, postController.getCommentsList)
+
+router.put("/post/:profileId/updatePost/:postId", MW.authentication, MW.authorization, postController.updatePost)
+
+router.delete("/post/:profileId/deletePost/:postId", MW.authentication, MW.authorization, postController.deletePost)
 
 
 //====================================  Invalid API  ==========================================//

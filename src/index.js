@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 app.use(multer().any());
 
 mongoose.connect(
-    "mongodb+srv://Saswath1403:S%40swath9476@cluster0.fjep0.mongodb.net/SocialMedia-DB",
+    "mongodb+srv://socialmedia:socialmedia@cluster0.hr8h8gg.mongodb.net/SocialMedia-DB?retryWrites=true&w=majority",
     {
       useNewUrlParser: true,
     }

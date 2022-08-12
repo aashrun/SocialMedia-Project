@@ -96,7 +96,7 @@ const getPost = async function (req,res){
         let block = postProfile.blockedAccs
         for(let i=0; i<block.length; i++){
             if(block[i]._id == profileId){
-                res.status(403).send({status: false, message: `You are not allowed to view ${postProfile.userName}'s posts!`})
+               return res.status(403).send({status: false, message: `You are not allowed to view ${postProfile.userName}'s posts!`})
             }
         }
 
@@ -113,7 +113,57 @@ const getPost = async function (req,res){
         obj["Likes"] = post["likesCount"]
         obj["Comments"] = post["commentsCount"]
 
-        res.status(200).send({status: true, data: obj})
+       return res.status(200).send({status: true, data: obj})
+
+
+    }catch(error){
+       return res.status(500).send({status: false, message: error.message})
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//=====================================  Fetching comment's list of a post  ======================================//
+
+const getCommentsList = async function (req,res){
+    try{
+        let profileId = req.params.profileId
+        let postId = req.params.postId
+
+        if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId!"})
+        let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
+        if(!profile) return res.status(404).send({status: false, message: "No such profileId exists."})
+
+
+        if(!idMatch(postId)) return res.status(400).send({status: false, message: "Invalid postId!"})
+        let post = await postModel.findOne({_id: postId, isDeleted: false})
+        if(!post) return res.status(404).send({status: false, message: "No such post exists."})
+
+        let postProfile = await profileModel.findOne({_id: post.profileId, isDeleted: false})
+
+        let block = postProfile.blockedAccs
+        for(let i=0; i<block.length; i++){
+            if(block[i]._id == profileId){
+               return res.status(403).send({status: false, message: `You are not allowed to view ${postProfile.userName}'s post's comment's list!`})
+            }
+        }
+
+      let obj = {}
+      obj["postId"] = post["_id"]
+      obj["CommentsList"] = post["commentsList"]
+
+
+        return res.status(200).send({status: true, data: obj})
 
 
     }catch(error){
@@ -121,4 +171,152 @@ const getPost = async function (req,res){
     }
 }
 
-module.exports = {createPost, getPost}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//=======================================  Fetching Like list of a post   =========================================//
+
+const getLikesList = async function (req,res){
+    try{
+        let profileId = req.params.profileId
+        let postId = req.params.postId
+
+        if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId!"})
+        let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
+        if(!profile) return res.status(404).send({status: false, message: "No such profileId exists."})
+
+
+        if(!idMatch(postId)) return res.status(400).send({status: false, message: "Invalid postId!"})
+        let post = await postModel.findOne({_id: postId, isDeleted: false})
+        if(!post) return res.status(404).send({status: false, message: "No such post exists."})
+
+        let postProfile = await profileModel.findOne({_id: post.profileId, isDeleted: false})
+
+        let block = postProfile.blockedAccs
+        for(let i=0; i<block.length; i++){
+            if(block[i]._id == profileId){
+              return  res.status(403).send({status: false, message: `You are not allowed to view ${postProfile.userName}'s post's likes List!`})
+            }
+        }
+
+      let obj = {}
+      obj["postId"] = post["_id"]
+      obj["likesList"] = post["likesList"]
+
+
+       return  res.status(200).send({status: true, data: obj})
+
+
+    }catch(error){
+        res.status(500).send({status: false, message: error.message})
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//===================================  To update a post  ========================================//
+
+const updatePost = async function (req, res){
+    try{
+       
+        let profileId = req.params.profileId
+        let postId = req.params.postId
+        let data = req.body
+    
+        if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId!"})
+        let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
+        if(!profile) return res.status(404).send({status: false, message: "No such profileId exists."})
+
+        if(!idMatch(postId)) return res.status(400).send({status: false, message: "Invalid postId!"})
+        let post = await postModel.findOne({_id: postId, isDeleted: false})
+        if(!post) return res.status(404).send({status: false, message: "No such post exists."})
+
+        if(profileId != post.profileId) return res.status(403).send({status: false, message: "You cannot update somebody else's post!"})
+
+
+        if(req.body.caption){
+            if(!isValid(req.body.caption)) return res.status(400).send({status: false, message: "Invalid caption format!"})
+            data.caption = data.caption.trim().split(" ").filter(word => word).join(" ")
+        }
+
+        if(req.body.location){
+            if(!isValid(location)) return res.status(400).send({status: false, message: "Please provide a valid location."})
+            data.location = data.location.trim().split(" ").filter(word => word).join(" ")
+        }
+
+        let newData = await postModel.findOneAndUpdate({_id: postId}, data,{new:true})
+        return res.status(200).send({status: true, message: "post updated successfully!", data: newData})
+
+
+    }catch(error){
+        return res.status(500).send({status: false, message: error.message})
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//========================================  Deleting a post  =====================================//
+
+const deletePost = async function (req, res){
+    try{
+        let profileId = req.params.profileId
+        let postId = req.params.postId
+
+        if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId."})
+        if(!idMatch(postId)) return res.status(400).send({status: false, message: "Invalid postId."})
+
+        let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
+        if(!profile) return res.status(404).send({status: false, message: "This profileId doesn't exist!"})
+
+        let post = await postModel.findOne({_id: postId, isDeleted: false})
+        if(!post) return res.status(404).send({status: false, message: "This post doesn't exist!"})
+
+
+        if(profileId != post.profileId) return res.status(403).send({status: false, message: "You cannot delete somebody else's post!"})
+
+
+        let newData = await postModel.findOneAndUpdate({_id: postId}, {isDeleted: true, deletedAt: Date.now()}, {new: true})
+        return res.status(200).send({status: true, message: "Post deleted successfully!", data: newData})
+
+    }catch(error){
+        return res.status(500).send({status: false, message: error.message})
+    }
+}
+module.exports = {createPost, getPost, getCommentsList, getLikesList, updatePost, deletePost}

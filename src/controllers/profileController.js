@@ -550,6 +550,10 @@ const blockProfile = async function(req, res){
 
     if(userProfileId == userToBeBLocked) return  res.status(400).send({ status: false, message: "You cannot block yourself lol." }) 
 
+    if(!idMatch(userProfileId)) return res.status(400).send({status: false, message: "The profileId in the params is invalid!"})
+    if(!idMatch(userToBeBLocked)) return res.status(400).send({status: false, message: "The profileId in the body is invalid!"})
+
+
     let user = await profileModel.findOne({_id:userProfileId, isDeleted:false})
     if(!user) return res.status(404).send({ status: false, message: " ProfileId doesn't exist! " }) 
     
@@ -657,30 +661,34 @@ const unblockProfile = async function (req, res) {
     try {
 
         let userProfileId = req.params.profileId
-        let userTounBlock = req.body.profileId
+        let userToUnblock = req.body.profileId
 
         if (userProfileId == userTounBlock) return res.status(400).send({ status: false, message: "Invalid request!" })
 
-        let user = await profileModel.findOne({ _id: userProfileId, isDeleted: false })
-        if (!user) return res.status(404).send({ status: false, message: "No such profile exist!" })
+        if(!idMatch(userProfileId)) return res.status(400).send({status: false, message: "The profileId in the params is invalid!"})
+        if(!idMatch(userToUnblock)) return res.status(400).send({status: false, message: "The profileId in the body is invalid!"})
 
-        let unblock = await profileModel.findOne({ _id: userTounBlock, isDeleted: false })
-        if (!unblock) return res.status(404).send({ status: false, message: "No such profile found!" })
+        let user = await profileModel.findOne({ _id: userProfileId, isDeleted: false })
+        if (!user) return res.status(404).send({ status: false, message: "The profileId provided in the params doesn't exist!" })
+
+        let unblock = await profileModel.findOne({ _id: userToUnblock, isDeleted: false })
+        if (!unblock) return res.status(404).send({ status: false, message: "The profileId provided in the body doesn't exist!" })
 
 
         let userBlockedAcc = user.blockedAccs
 
         for (let i = 0; i < userBlockedAcc.length; i++) {
-            if (userBlockedAcc[i]._id == userTounBlock) {
+            if (userBlockedAcc[i]._id == userToUnblock) {
                 userBlockedAcc.splice(i, 1)
-                break;
-            } else { return res.status(404).send({ status: false, message: "you are not in blocked list" }) }
+
+                await profileModel.findOneAndUpdate({ _id: userProfileId }, { blockedAccs: userBlockedAcc })
+                return res.status(200).send({ status: true, message: `${unblock.userName} has now been unblocked successfully!`})
+            }  
 
         }
 
-        await profileModel.findOneAndUpdate({ _id: userProfileId }, { blockedAccs: userBlockedAcc })
+        return res.status(404).send({ status: false, message: "You are not in the blocked list" }) 
 
-        return res.status(200).send({ status: true, message: "Profile unblocked successfully! " })
 
     } catch (err) {
         console.log("This is the error:", err.message)
@@ -763,6 +771,82 @@ const commentOnPost = async function (req, res){
 
 
 
+//=====================================  Delete a comment  ======================================//
+
+const deleteComment = async function (req, res){
+    try{
+        let profileId = req.params.profileId
+        let data = req.body
+        let {postId, comment} = data
+
+        if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId!"})
+        let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
+        if(!profile) return res.status(404).send({status: false, message: "The profileId provided was not found."})
+
+        if(!emptyBody(data))  return res.status(400).send({status: false, message: "Request body cannot be empty!"})
+
+        if(!postId)  return res.status(400).send({status: false, message: "Post Id is required to delete a comment!"})
+        let post = await postModel.findOne({_id: postId, isDeleted: false})
+        if(!post) return res.status(404).send({status: false, message: "The postId you requested for doesn't exist."})
+
+        if(!comment)  return res.status(400).send({status: false, message: "It's mandatory to mention the comment you wish to delete!"})
+        if(!isValid(comment))  return res.status(400).send({status: false, message: "The 'comment' key cannot be empty!"})
+
+
+
+        if(post.profileId == profileId){  
+            let commentsList = post.commentsList
+            let commentsCount = post.commentsCount - 1
+
+            for(let i=0; i<commentsList.length; i++){
+                if(commentsList[i].Comment == comment){
+                    commentsList.splice(i, 1)
+
+                  let newData =  await postModel.findOneAndUpdate({_id: postId}, {commentsList: commentsList, commentsCount: commentsCount}, {new: true})
+                  return res.status(200).send({status: true, message: "The comment was successfully deleted!", data: newData})
+                }
+            }
+           return res.status(404).send({status: false, message: "The comment you wanted to delete was not found!"})
+        }
+        
+
+
+        if(post.profileId != profileId){  
+            let postProfile = await profileModel.findOne({_id: post.profileId, isDeleted: false})
+            
+            let block = postProfile.blockedAccs
+            for(let i=0; i<block.length; i++){
+                if(block[i]._id == profileId){
+                    return res.status(403).send({status: false, message: "You cannot delete comments on this post because the owner has blocked you!"})
+                }
+            }
+
+
+            let commentsList = post.commentsList
+            let commentsCount = post.commentsCount - 1
+
+            for(let i=0; i<commentsList.length; i++){
+                if(commentsList[i].userName == profile.userName && commentsList[i].Comment == req.body.comment){
+                    commentsList.splice(i, 1)
+
+                   let newData = await postModel.findOneAndUpdate({_id: postId}, {commentsList: commentsList, commentsCount: commentsCount}, {new: true})
+                    return res.status(200).send({status: true, message: "The comment was successfully deleted!", data: newData})
+                }
+            }
+            return res.status(404).send({status: false, message: "This comment doesn't exist!"})
+        }
+
+    }catch(error){
+        res.status(500).send({status: false, message: error.message})
+    }
+}
+
+
+
+
+
+
+
 //==========================================  Like a post  ======================================//
 
 const likePost = async function (req, res) {
@@ -783,8 +867,7 @@ const likePost = async function (req, res) {
         let block = postProfile.blockedAccs
         for (let i = 0; i < block.length; i++) {
             if (block[i]._id == profileId) {
-                return res.status(404).send({ status: false, message: "No such post exists!" })
-                break;
+                return res.status(403).send({ status: false, message: "You cannot like this post because the owner of this post has blocked you!" })
             }
         }
         let likesList = post.likesList
@@ -858,11 +941,10 @@ const unlikePost = async function (req, res) {
 
                 return res.status(200).send({ status: true, message: "Unliked post.", data: updatedLikeList })
                 
-            }else { 
-                return res.status(400).send({ status: false, message: "You have not liked this post!" }) 
             }
         }
-
+                return res.status(400).send({status: false, message: "You have already unliked this post!"})
+           
 
     } catch (error) {
         return res.status(500).send({ status: false, message: error.message })
@@ -880,4 +962,4 @@ const unlikePost = async function (req, res) {
 
 
 
-module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile, unblockProfile, commentOnPost, likePost, unlikePost}
+module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile, unblockProfile, commentOnPost, deleteComment, likePost, unlikePost}
