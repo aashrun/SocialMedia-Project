@@ -27,7 +27,9 @@ router.put("/profile/:profileId/unblock", profileController.unblockProfile)
 
 router.put("/profile/:profileId/comment", profileController.commentOnPost)
 
+router.put("/profile/:profileId/like", profileController.likePost)
 
+router.put("/profile/:profileId/unlike", profileController.unlikePost)
 
 //====================================  Post Handlers  =========================================//
 router.post("/post/create", postController.createPost)

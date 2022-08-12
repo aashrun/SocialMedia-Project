@@ -42,7 +42,7 @@ const isValidMobileNum = function (value) {
 };
 
 const profileImageCheck = function (value) {
-    let user = /(\.jpg|\.jpeg|\.bmp|\.gif|\.png|\.jfif)$/i.test(value)
+    let user = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i.test(value)
     return user
 };
 

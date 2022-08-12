@@ -18,15 +18,15 @@ const createPost = async function (req, res){
         
         if(!profileId) return res.status(400).send({status: false, message: "ProfileId is mandatory!"})
         if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId!"})
-        let uniqueProfileId = await profileModel.findOne({_id: profileId})
+        let uniqueProfileId = await profileModel.findOne({_id: profileId, isDeleted: false})
         if(!uniqueProfileId) return res.status(404).send({status: false, message: "No such profileId was found!"})
 
 
-        if(!files) return res.status(400).send({status: false, message: "An image is required to post something"})
+        if(!files) return res.status(400).send({status: false, message: "An image is required to post something!"})
 
         let uploadedFileURL = await upload.uploadFile(files[0])
         data.image = uploadedFileURL;
-        if (!profileImageCheck(files)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
+        if (!profileImageCheck(data.image)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
 
 
         if(caption){
@@ -61,6 +61,10 @@ const createPost = async function (req, res){
         return res.status(500).send({status: false, message: error.message})
     }
 }
+
+
+
+
 
 
 

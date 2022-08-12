@@ -701,6 +701,8 @@ const unblockProfile = async function (req, res) {
 
 
 
+
+
 //================================= To post a comment  =================================//
 
 const commentOnPost = async function (req, res){
@@ -738,20 +740,146 @@ const commentOnPost = async function (req, res){
         let commentsList = postCheck.commentsList
 
         let obj = {}
-        obj["_id"] = profileId
         obj["userName"] = profileCheck.userName
         obj["Comment"] = comment
-        let newComment = commentsList.push(obj)
+         commentsList.push(obj)
 
-        let finalData = await postModel.findOneAndUpdate({_id: postId}, {commentsCount: commentsCount, commentsList: newComment}, {new: true})
+        let finalData = await postModel.findOneAndUpdate({_id: postId}, {commentsCount: commentsCount, commentsList: commentsList}, {new: true})
         res.status(200).send({status: true, message: "Comment posted successfully!", data: finalData})
-
-
-
 
 
     }catch(error){
         res.status(500).send({status: false, message: error.message})
     }
 }
-module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile, unblockProfile, commentOnPost}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//==========================================  Like a post  ======================================//
+
+const likePost = async function (req, res) {
+    try {
+        let profileId = req.params.profileId
+        let postId = req.body.postId
+
+        if (!idMatch(profileId)) return res.status(400).send({ status: false, message: "Invalid profileId!" })
+        let profile = await profileModel.findOne({ _id: profileId, isDeleted: false })
+        if (!profile) return res.status(404).send({ status: false, message: "No such profile exists." })
+
+        if (!idMatch(postId)) return res.status(400).send({ status: false, message: "Invalid postId!" })
+        let post = await postModel.findOne({ _id: postId, isDeleted: false })
+        if (!post) return res.status(404).send({ status: false, message: "No such post exists." })
+
+        let postProfile = await profileModel.findOne({ _id: post.profileId, isDeleted: false })
+
+        let block = postProfile.blockedAccs
+        for (let i = 0; i < block.length; i++) {
+            if (block[i]._id == profileId) {
+                return res.status(404).send({ status: false, message: "No such post exists!" })
+                break;
+            }
+        }
+        let likesList = post.likesList
+        for (let i = 0; i < likesList.length; i++) {
+            if (likesList[i].userName == profile.userName) {
+                return res.status(400).send({ status: false, message: `You've already liked ${postProfile.userName}'s post!` })
+                break;
+            }
+        }
+
+        let newLike = {}
+        newLike.userName = profile.userName
+        likesList.push(newLike)
+        let likesCount = post.likesCount + 1
+
+        var updatedLikeList = await postModel.findOneAndUpdate({ _id: postId }, { likesList: likesList, likesCount: likesCount }, { new: true })
+        return res.status(200).send({ status: true, message: "You have now liked this post.", data: updatedLikeList })
+
+
+    } catch (error) {
+        return res.status(500).send({ status: false, message: error.message })
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//=======================================  Unliking a post  =====================================//
+
+const unlikePost = async function (req, res) {
+    try {
+        let profileId = req.params.profileId
+        let postId = req.body.postId
+
+        if (!idMatch(profileId)) return res.status(400).send({ status: false, message: "Invalid profileId!" })
+        let profile = await profileModel.findOne({ _id: profileId, isDeleted: false })
+        if (!profile) return res.status(404).send({ status: false, message: "No such profile exists." })
+
+        if (!idMatch(postId)) return res.status(400).send({ status: false, message: "Invalid postId!" })
+        let post = await postModel.findOne({ _id: postId, isDeleted: false })
+        if (!post) return res.status(404).send({ status: false, message: "No such post exists." })
+
+
+        let postProfile = await profileModel.findOne({ _id: post.profileId, isDeleted: false })
+
+        let block = postProfile.blockedAccs
+        for (let i = 0; i < block.length; i++) {
+            if (block[i]._id == profileId) {
+                return res.status(403).send({ status: false, message: "You cannot unlike the post because the user has blocked you!" })
+            }
+        }
+
+        let likesList = post.likesList
+
+        for (let i = 0; i < likesList.length; i++) {
+            if (likesList[i].userName == profile.userName) {
+                likesList.splice(i, 1)
+                
+                let likesCount = post.likesCount - 1
+                var updatedLikeList = await postModel.findOneAndUpdate({ _id: postId }, { likesList: likesList, likesCount: likesCount }, {new: true})
+
+                return res.status(200).send({ status: true, message: "Unliked post.", data: updatedLikeList })
+                
+            }else { 
+                return res.status(400).send({ status: false, message: "You have not liked this post!" }) 
+            }
+        }
+
+
+    } catch (error) {
+        return res.status(500).send({ status: false, message: error.message })
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile, unblockProfile, commentOnPost, likePost, unlikePost}
