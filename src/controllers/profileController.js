@@ -561,10 +561,8 @@ const blockProfile = async function(req, res){
     let existingBlocked = user.blockedAccs
     for (let i =0;i<existingBlocked.length;i++){
       if(existingBlocked[i]._id == userToBeBLocked){
-          break;
+        return res.status(400).send({ status: false, message: "Profile already blocked!" })
       }
-      return res.status(400).send({ status: false, message: "Profile already blocked!" })
-
     }
     let update = {}
 
