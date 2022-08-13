@@ -4,7 +4,8 @@ const bcrypt = require("bcrypt")
 const moment = require("moment")
 const upload = require('../aws/config.js')
 const jwt = require("jsonwebtoken")
-const redis = require = ("redis")
+const redis = require("redis")
+const{ promisify } = require("util");
 const {isValid, emptyBody, emailCheck, isValidPassword, idMatch, onlyNumbers, isValidMobileNum, profileImageCheck, userNameCheck, isValidDateFormat} = require("../validations/validator.js")
 
 
@@ -25,7 +26,7 @@ redisClient.auth("gWJ9sHgX461NdFPsDwQYmp2ZSc7uruSx", function (err) {
 });
 
 redisClient.on("connect", async function () {         
-    console.log("Connected to Redis");
+    console.log("Profile Controller is connected to Redis.");
 });
 
 const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);          
@@ -35,25 +36,6 @@ const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
 
 
-
-
-// let cachedProfileData = await GET_ASYNC(`${urlCode}`)
-      
-// if (cachedProfileData) {
-//     let data = JSON.parse(cachedProfileData)
-//     res.redirect(data.longUrl)
-// } else {
-//     let url = await urlModel.findOne({ urlCode: urlCode })  
-//     if (url) {
-//         await SET_ASYNC(`${url.urlCode}`, JSON.stringify(url)) 
-        
-//         return res.redirect(url.longUrl)
-//     }
-//     else {
-//         return res.status(404).send({ status: false, message: "No Url Found" })
-//     }
-
-// }
 
 
 
@@ -236,6 +218,10 @@ const loginUser = async function (req, res) {
 
 
 
+
+
+
+
 //=======================================  Getting Profile Details  ====================================//
 
 const getProfile = async function(req,res){
@@ -244,12 +230,42 @@ const getProfile = async function(req,res){
         let otherProfileId = req.body.profileId
 
 
+
         if(otherProfileId){
         if (!isValid(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a profileId!"}) 
 
         if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
         if (!idMatch(otherProfileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in the body!"})
 
+        let cachedProfileData = await GET_ASYNC(`${otherProfileId}`)
+        if(cachedProfileData){
+            let getProfileData  = JSON.parse(cachedProfileData)
+
+            let block = getProfileData.blockedAccs
+            for(let i=0; i<block.length; i++){
+                if(block[i]._id == profileId){
+                    return res.status(403).send({status: false, message: "You've been blocked by this user!"})
+                }
+            }
+    
+            let obj = {}
+            obj["fullName"] = getProfileData["fullName"]
+            obj["userName"] = getProfileData["userName"]
+            obj["postCount"] = getProfileData["postCount"]
+            obj["followerCount"] = getProfileData["followerCount"]
+            obj["followingCount"] = getProfileData["followingCount"]
+            obj["postData"] = getProfileData["postData"]
+            obj["bio"] = getProfileData["bio"]
+            obj["profileImage"] = getProfileData["profileImage"]
+
+
+    
+            return res.status(200).send({ status: true, message: "Profile details", data: obj });
+            
+
+        }
+
+        else{
         let getProfileData = await profileModel.findOne({_id: otherProfileId, isDeleted:false})
         if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found!"})
 
@@ -270,13 +286,40 @@ const getProfile = async function(req,res){
         obj["bio"] = getProfileData["bio"]
         obj["profileImage"] = getProfileData["profileImage"]
 
+        if(getProfileData){
+            await SET_ASYNC(`${getProfileData._id}`, JSON.stringify(getProfileData)) 
+
         return res.status(200).send({ status: true, message: "Profile details", data: obj });
+        }
+    }
+
+      }
+      
 
 
 
-      }else{
+
+
+      else{
         if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId!"})
 
+        let cachedProfileData = await GET_ASYNC(`${profileId}`)
+        if(cachedProfileData){
+            let getProfileData  = JSON.parse(cachedProfileData)
+            let obj = {}
+            obj["fullName"] = getProfileData["fullName"]
+            obj["userName"] = getProfileData["userName"]
+            obj["postCount"] = getProfileData["postCount"]
+            obj["followerCount"] = getProfileData["followerCount"]
+            obj["followingCount"] = getProfileData["followingCount"]
+            obj["postData"] = getProfileData["postData"]
+            obj["bio"] = getProfileData["bio"]
+            obj["profileImage"] = getProfileData["profileImage"]
+    
+            return res.status(200).send({ status: true, message: "Profile details", data: obj });
+
+        }
+       else {
         let getProfileData = await profileModel.findOne({_id: profileId, isDeleted:false})
         if(!getProfileData) return res.status(404).send({status:false, message: "ProfileId not found!"})
 
@@ -289,9 +332,14 @@ const getProfile = async function(req,res){
         obj["postData"] = getProfileData["postData"]
         obj["bio"] = getProfileData["bio"]
         obj["profileImage"] = getProfileData["profileImage"]
+        
+
+        if(getProfileData){
+            await SET_ASYNC(`${getProfileData._id}`, JSON.stringify(getProfileData)) 
 
         return res.status(200).send({ status: true, message: "Profile details", data: obj });
-      }
+        }}
+    }
     }
     catch(error){
         res.status(500).send({status:false, message:error.message})

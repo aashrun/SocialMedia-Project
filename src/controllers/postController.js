@@ -1,37 +1,7 @@
 const postModel = require("../models/postModel.js")
 const profileModel = require("../models/profileModel.js")
 const upload = require('../aws/config.js')
-const redis = require = ("redis")
-
 const {isValid, emptyBody, idMatch, profileImageCheck} = require("../validations/validator.js")
-
-
-
-
-
-
-
-
-//===================================  Cache connection  =================================================//
-
-const redisClient = redis.createClient(
-    12223,                                                            
-    "redis-12223.c212.ap-south-1-1.ec2.cloud.redislabs.com",          
-    { no_ready_check: true }                                          
-);
-redisClient.auth("gWJ9sHgX461NdFPsDwQYmp2ZSc7uruSx", function (err) {  
-    if (err) throw err;
-});
-
-redisClient.on("connect", async function () {         
-    console.log("Connected to Redis");
-});
-
-const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);          
-const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
-
-
-
 
 
 
@@ -169,7 +139,7 @@ const getPost = async function (req,res){
 
 
 
-//=====================================  Fetching comment's list of a post  ======================================//
+//===================================  Fetching comments' list of a post  ====================================//
 
 const getCommentsList = async function (req,res){
     try{
@@ -221,7 +191,7 @@ const getCommentsList = async function (req,res){
 
 
 
-//=======================================  Fetching Like list of a post   =========================================//
+//=======================================  Fetching Like's list of a post   =========================================//
 
 const getLikesList = async function (req,res){
     try{
@@ -355,4 +325,12 @@ const deletePost = async function (req, res){
         return res.status(500).send({status: false, message: error.message})
     }
 }
+
+
+
+
+
+
+
+
 module.exports = {createPost, getPost, getCommentsList, getLikesList, updatePost, deletePost}
