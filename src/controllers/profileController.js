@@ -3,9 +3,59 @@ const postModel = require("../models/postModel.js")
 const bcrypt = require("bcrypt")
 const moment = require("moment")
 const upload = require('../aws/config.js')
-const jwt = require("jsonwebtoken");
-
+const jwt = require("jsonwebtoken")
+const redis = require = ("redis")
 const {isValid, emptyBody, emailCheck, isValidPassword, idMatch, onlyNumbers, isValidMobileNum, profileImageCheck, userNameCheck, isValidDateFormat} = require("../validations/validator.js")
+
+
+
+
+
+
+
+
+//===================================  Cache connection  =================================================//
+const redisClient = redis.createClient(
+    12223,                                                            
+    "redis-12223.c212.ap-south-1-1.ec2.cloud.redislabs.com",          
+    { no_ready_check: true }                                          
+);
+redisClient.auth("gWJ9sHgX461NdFPsDwQYmp2ZSc7uruSx", function (err) {  
+    if (err) throw err;
+});
+
+redisClient.on("connect", async function () {         
+    console.log("Connected to Redis");
+});
+
+const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);          
+const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
+
+
+
+
+
+
+
+// let cachedProfileData = await GET_ASYNC(`${urlCode}`)
+      
+// if (cachedProfileData) {
+//     let data = JSON.parse(cachedProfileData)
+//     res.redirect(data.longUrl)
+// } else {
+//     let url = await urlModel.findOne({ urlCode: urlCode })  
+//     if (url) {
+//         await SET_ASYNC(`${url.urlCode}`, JSON.stringify(url)) 
+        
+//         return res.redirect(url.longUrl)
+//     }
+//     else {
+//         return res.status(404).send({ status: false, message: "No Url Found" })
+//     }
+
+// }
+
+
 
 
 //=======================================  Creating a Profile  ======================================//
@@ -248,6 +298,8 @@ const getProfile = async function(req,res){
         console.log(error)
     }
 }
+
+
 
 
 

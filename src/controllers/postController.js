@@ -1,8 +1,44 @@
 const postModel = require("../models/postModel.js")
 const profileModel = require("../models/profileModel.js")
 const upload = require('../aws/config.js')
+const redis = require = ("redis")
 
-const {isValid, emptyBody, emailCheck, isValidPassword, idMatch, onlyNumbers, isValidMobileNum, profileImageCheck, userNameCheck, isValidDateFormat} = require("../validations/validator.js")
+const {isValid, emptyBody, idMatch, profileImageCheck} = require("../validations/validator.js")
+
+
+
+
+
+
+
+
+//===================================  Cache connection  =================================================//
+
+const redisClient = redis.createClient(
+    12223,                                                            
+    "redis-12223.c212.ap-south-1-1.ec2.cloud.redislabs.com",          
+    { no_ready_check: true }                                          
+);
+redisClient.auth("gWJ9sHgX461NdFPsDwQYmp2ZSc7uruSx", function (err) {  
+    if (err) throw err;
+});
+
+redisClient.on("connect", async function () {         
+    console.log("Connected to Redis");
+});
+
+const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);          
+const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
+
+
+
+
+
+
+
+
+
+
 
 
 
