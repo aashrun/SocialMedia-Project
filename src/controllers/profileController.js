@@ -453,6 +453,10 @@ const updateProfile = async function (req, res){
 
     let updated = await profileModel.findOneAndUpdate({_id:profileId},data,{new:true})
 
+    if(updated){
+        await SET_ASYNC(`${updated._id}`, JSON.stringify(updated))
+    }
+
     let response = {}
    
     response.fullName = updated.fullName 
@@ -471,6 +475,11 @@ const updateProfile = async function (req, res){
         res.status(500).send({status : false, message : error.message})
     }
 }
+
+
+
+
+
 
 
 
@@ -499,16 +508,12 @@ const deleteProfile = async function (req, res) {
         obj.isDeleted = true
         obj.deletedAt = Date.now()
         
-        // deleting profile
         const deletedProfile = await profileModel.findOneAndUpdate({ _id: profileId, isDeleted: false },obj)
         if (!deletedProfile) return res.status(404).send({ status: false, message: "No such profile found!" })
 
-        //deleting all post of  profile
         await postModel.updateMany({ profileId: profileId, isDeleted: false }, {isDeleted:true})
 
         let allprofile = await profileModel.find()
-
-       // deleting from other's following list
 
         for (let i = 0; i < allprofile.length; i++) {
             let followings = allprofile[i].followingList
@@ -522,7 +527,7 @@ const deleteProfile = async function (req, res) {
                 }
             }
         }
-        //deleting from other's followers list 
+        
 
         for (let i = 0; i < allprofile.length; i++) {
             let followers = allprofile[i].followerList
@@ -542,6 +547,8 @@ const deleteProfile = async function (req, res) {
     }
 
 }
+
+
 
 
 
@@ -626,6 +633,84 @@ const followProfile = async function (req, res){
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+//==================================== Unfollowing a profile  ===========================================//
+
+const unfollowProfile = async function (req, res){
+    try{
+        let profileId = req.params.profileId
+        let data = req.body
+        let personToUnfollow = data.profileId
+        
+
+        if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
+        let profile = await profileModel.findOne({ _id: profileId, isDeleted:false})      
+       if (!profile) return res.status(404).send({ status: false, msg: "No such profile found" })
+
+
+        if(!emptyBody(data)) return res.status(400).send({status: false, message: "Please provide the profileId you want to follow!"})
+
+
+        if (!isValid(personToUnfollow)) return res.status(400).send({status: false, message: "Please enter a profileId!"}) 
+        if (!idMatch(personToUnfollow)) return res.status(400).send({status: false, message: "Please enter a valid profileId in the body!"})
+
+        if(profileId == personToUnfollow) return  res.status(400).send({ status: false, message: "You cannot unfollow yourself, lol." }) 
+
+        let bodyProfileId = await profileModel.findOne({ _id: personToUnfollow, isDeleted: false})      
+       if (!bodyProfileId) return res.status(404).send({ status: false, msg: "The profile you wish to follow doesn't exist!" })
+       
+
+
+       let block = bodyProfileId.blockedAccs
+       for(let i=0; i<block.length; i++){
+        if(block[i]._id == profileId){
+            return res.status(403).send({status: false, message: `You cannot perform this action because ${bodyProfileId.userName} have blocked you!`})
+        }
+       }
+
+
+       let otherFollowerList = bodyProfileId.followerList
+
+       for(let j=0; j<otherFollowerList.length; j++){
+        if(otherFollowerList[j]._id != profileId){
+            return res.status(403).send({status: false, message: `You cannot unfollow ${bodyProfileId.userName} because you do not exist in their follower's list!`})
+        }else{
+            otherFollowerList.splice(j, 1)
+            let followerCount = bodyProfileId.followerCount - 1
+
+            await profileModel.findOneAndUpdate({_id: personToUnfollow}, {$set: {followerList: otherFollowerList, followerCount: followerCount}})
+        }
+       }
+
+       let myFollowing = profile.followingList
+       for(let a = 0; a<myFollowing.length; a++){
+        if(myFollowing[a]._id == bodyProfileId){
+            myFollowing.splice(a, 1)
+            let myFollowingCount = profile.followingCount - 1 
+
+            await profileModel.findOneAndUpdate({_id: profileId}, {$set: {followingList: myFollowing, followingCount: myFollowingCount}})
+        }
+    }
+
+       return res.status(200).send({status: true, message: `You have unfollowed ${bodyProfileId.userName}.`})
+
+
+    }catch(error){
+        return res.status(500).send({status: false, message: error.message})
+    }
+}
 
 
 
@@ -755,6 +840,8 @@ const blockProfile = async function(req, res){
 
 
 
+
+
 //========================================  Unblocking a profile  =========================================//
 
 const unblockProfile = async function (req, res) {
@@ -830,6 +917,14 @@ const commentOnPost = async function (req, res){
 
         if(!comment) return res.status(400).send({status: false, message: " 'Comment' cannot be empty!"})
         if(!isValid(comment)) return res.status(400).send({status: false, message: "Please provide with a comment!"})
+
+        let cussArray = ["Fuck", "fuck", "Motherfucker", "motherfucker", "asshole", "Asshole"]
+        let arr = comment.split(" ")
+        for(let k=0; k<arr.length; k++){
+            if(arr[k].includes(cussArray)){
+                return res.status(403).send({status: false, message: 'No cuss words allowed!'})
+            }
+        }
 
         let profileOfPost = await profileModel.findOne({_id: postCheck.profileId, isDeleted: false})
         if(!profileOfPost) res.status(403).send({status: false, message: "The account owner of this post was not found or is deleted. "})
@@ -940,6 +1035,11 @@ const deleteComment = async function (req, res){
         res.status(500).send({status: false, message: error.message})
     }
 }
+
+
+
+
+
 
 
 
@@ -1062,4 +1162,4 @@ const unlikePost = async function (req, res) {
 
 
 
-module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, blockProfile, unblockProfile, commentOnPost, deleteComment, likePost, unlikePost}
+module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, unfollowProfile, blockProfile, unblockProfile, commentOnPost, deleteComment, likePost, unlikePost}

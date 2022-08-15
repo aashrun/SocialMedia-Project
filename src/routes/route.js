@@ -13,19 +13,21 @@ router.post("/profile/register", profileController.createProfile)
 
 router.post("/profile/login", profileController.loginUser)
 
-router.get("/profile/:profileId/getProfile", MW.authentication, MW.authorization, profileController.getProfile)
+router.get("/profile/:profileId/getProfile",  profileController.getProfile)
 
-router.put("/profile/:profileId/update", MW.authentication, MW.authorization, profileController.updateProfile)
+router.put("/profile/:profileId/update",  profileController.updateProfile)
 
 router.delete("/profile/:profileId/delete", MW.authentication, MW.authorization, profileController.deleteProfile)
 
-router.put("/profile/:profileId/follow", MW.authentication, MW.authorization, profileController.followProfile)
+router.put("/profile/:profileId/follow", profileController.followProfile)
+
+router.put("/profile/:profileId/unfollow", profileController.unfollowProfile)
 
 router.put("/profile/:profileId/block", MW.authentication, MW.authorization, profileController.blockProfile)
 
 router.put("/profile/:profileId/unblock", MW.authentication, MW.authorization, profileController.unblockProfile)
 
-router.put("/profile/:profileId/comment", MW.authentication, MW.authorization, profileController.commentOnPost)
+router.put("/profile/:profileId/comment",  profileController.commentOnPost)
 
 router.delete("/profile/:profileId/deleteComment", MW.authentication, MW.authorization, profileController.deleteComment)
 
