@@ -111,7 +111,7 @@ This again is a middleware which confirms that the jwt token generated after log
  In conclusion, although not fancy, but this is a genuine backend handle of a social medial platform. Took us around 6 days to build it.
  Thanks for reading, cheers! 
  
-                                                                            - Shivani and Aashrun
+                                                                                                                                         - Shivani and Aashrun
 
 
 
