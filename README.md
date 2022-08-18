@@ -1,215 +1,117 @@
-# SocialMedia-Project
+Social Media Project’s README
 
+Along with a few complex logics been put into this project, we have tried to incorporate AWS S3 services along with Cache (Redis precisely) which has made the experience of this project surreal! This project consists of 21 APIs and is a thorough backend handle of a social media platform famously known as “Instagram”. Hope you enjoy reading this README and benefit from it! 😊
 
 
-ReadMe:
-Profile Controller –
 
-1)	Register Api: profile/register
-•	Create a profile document from request body. Request body must contain image.
-•	Upload image to S3 bucket and save its public URL in user document.
-•	Handle edge cases like extra spaces in between name and bio.
-•	On success send 201, and send the appropriate status code if error persists.
+1)	POST API – Creating a profile.
+A profile is created on the Social Media platform whilst handling many validations like ‘age should be more than 13’, the username should be unique etc. Some fields have not been kept mandatory, like the profile image, bio and location. A user is then successfully able to create a profile on the social media platform.
 
-2)	Login Api: profile/login
 
-•	Allow a user to login with their email/mobileNo and password.
-•	Get email, mobileNo and password in the request body, if !email && !mobileNo then  return error.
-•	Can login through email or mobileNo, these two will not be mandatory but password.
-•	On a successful login attempt return the profileId and a JWT token containing the userId, exp, iat.
-•	On success send 200, and send the appropriate status code if error persists.
 
+2)	POST API – Logging in the User.
+In this API, we have handled two scenarios in total – first being that a user can log in with their mobile number and password and the second being that a user can log in with their email and password. Strict validations have been used for email format and on mobile number (to check if the mobile number is an Indian mobile number or not). We have installed a package called “JWT” which is being sent in the response body for the authentication and the authorization purposes.
 
-3)	Get Own Profile Api: profile/:profileId/getOwnProfile
-•	Allow a user to fetch details of their own profile.
-•	Check if the profileId exists in the database
-•	Authentication and Authorization required
-•	Response structure – [fullName, userName, postCount, followersCount, followingCount, postData, bio, profileImage]
-•	Make sure that the profileId exists/ isDeleted is false
-•	On success send 200, and send the appropriate status code if error persists.
 
 
+3)	GET API – Fetching profile details of a user.
+This API was designed keeping in mind about two different scenarios – first being that a user wants to fetch details of their own profile and the second being that a user wants to fetch details of somebody else’s profile. When trying to fetch details of own profile, the API has been built in a very simple manner keeping in mind about what details have to be shown in the response body, for example, the full name, username, post count, followers count, following count, profile image, bio and the post data ONLY. The second scenario is when the user tries to fetch the details of somebody else’s profile by providing their profileId in the request body. The extra validation which goes into the picture is that it was imperative to check if the other user had blocked us or not. If yes, then an error will be shown in the response body with a status code of 403 (Forbidden). Cache was implemented in this API for a better yet faster experience which in turn helps reduce the number of DB calls.
 
-4) Update Api: profile/:profileId/update
-•	Authentication and Authorization required
-•	Check if profileId exists in the db.
-•	Get [userName, fullName, password, email, mobileNo, bio, profileImage, location] in the request body and only they can be edited. Keys like [followers, following and postCount] cannot be edited/updated.
-•	On a successful update, send the updated document in the response body.
-•	Response structure – [fullName, userName, postCount, length of followers, length of following, postData, bio, profileImage]
-•	Make sure that the profileId exists/ isDeleted is false
-•	On success send 200, and send the appropriate status code if error persists.
 
 
+4)	PUT API – Updating a profile.
+This API is a lot similar to the create profile API but the response structure was kept different this time. A user gets enough flexibility to update almost all their details but the response only showed the full name, username, post count, followers count, following count, profile image, bio and the post data ONLY (keeping Instagram’s interface in mind). Implemented cache here as well, setting updated details.
 
-5) Delete Api: profile/:profileId/delete
-•	Authentication and Authorization required
-•	Deletes the profile
-•	Make sure that the profileId exists/ isDeleted is false
-•	While deleting a profile, ensure all the posts related to the profile are also deleted.
-•	On success send 200, and send the appropriate status code if error persists.
 
 
+5)	DELETE API – Deleting a profile.
+This was one of the most complex APIs in the project. We had to handle a lot of edge cases and surely, it wasn’t just a soft delete. The one who deletes their profile had their post count go to 0 along with their follower’s and following’s count as well. The post data was emptied, the followers and the following were removed from the other people’s following list and follower list who had followed or followed by the person who deleted their profile, and their follower’s and following count was reduced by 1. A cache was also added in this API.
 
 
-6) Comment Api: profile/:profileId/comment
-•	Authentication and Authorization required
-•	Get postId and comment in the request body
-•	Check if postId exists in the db.
-•	You can comment on your own post, check if postId has your own profileId.
-•	You can comment other’s post as well
-•	While commenting, increase the number of comments on the post of whosever post it is and send only the updated count of that post in response body.
-•	If you exist in their blockedAccount’s array, you cannot comment.
-•	Make sure that the profileId exists/ isDeleted is false
-•	On success send 200, and send the appropriate status code if error persists.
 
+6)	PUT API – Follow a profile.
+The purpose of this API is to make a user follow another user. Block validations are included. For example, when ‘a’ follows ‘b’, a’s following’s list is added with b’s data and a’s following count increases by 1. Similarly, b’s follower’s list is added with a’s data and follower’s count increases by 1. The updated data is then set into the Cache memory.
 
 
-7) Like Api: profile/:profileId/like
-•	Authentication and Authorization required
-•	Check if profileId exists in the db.
-•	Get postId in the request body
-•	Check if postId exists in the db.
-•	You can like your own post, check if postId has your own profileId.
-•	You can like other’s post as well
-•	While liking, increase the number of comments on the post of whosever post it is and send only the updated count of that post in response body.
-•	If you exist in their blockedAccount’s array, you cannot comment.
-•	Make sure that the profileId exists/ isDeleted is false
-•	On success send 200, and send the appropriate status code if error persists.
 
+7)	PUT API – Unfollow a profile.
+This API is completely opposite of the unfollow API. When ‘a’ unfollows ‘b’, a’s following count is reduced by 1 and the data of b in a’s following list is removed. Similarly, b’s follower count is reduced by 1 and the follower’s list’s data of a is completely removed. Block validation is included along with many others. The data is then set to the Cache memory.
 
-8) Follow Api – profile/:profileId/follow
-•	Authentication and Authorization required
-•	Check if profileId exists in the db.
-•	Get 2nd person’s profileId in request body.
-•	Check if profileId of 2nd person exists in the db.
-•	When you hit the request, 2nd person’s followersCount increases by 1, while your followingCount increases by one.
-•	If you exist in their blockedAccount’s array, you cannot follow.
-•	Make sure that the profileId exists/ isDeleted is false
-•	On success send 200, and send the appropriate status code if error persists.
 
 
-9) Get Details of other acc’s API: profile/:profileId/getOtherAcc
-•	Authentication and Authorization required
-•	Get the profileId you want to search details for in the request body.
-•	Check if profileId exists in the db.
-•	Blocked contact cannot access your details.
-•	Response structure – [fullName, userName, postCount, followersCount, followingCount, postData, bio, profileImage].
-•	Make sure that the profileId exists/ isDeleted is false
-•	On success send 200, and send the appropriate status code if error persists
+8)	PUT API – Block a profile.
+A negative feature, but had to tag this along in this project because it only made our other validation more complex! This API is used when you wish to block a person; once a person is blocked, they will not be able to access your profile, your posts, probably nothing! When a user is blocked, your data is removed from their follower’s and following’s list and their follower’s and following’s count is reduced by 1 respectively. And the same happens with the person who has blocked the other user. Your follower’s and following’s list will have not data of the other person and your follower’s and following’s count will be reduced by 1. The updated data is then set into the Cache memory.
 
 
 
-10) Block Api: profile/:profileId/block
-•	Authentication and Authorization required
-•	Make sure profileId exists in the db.
-•	Get the profileId of the person you want to block in the request body.
-•	Make sure that the 2nd person exists in the db, and isDeleted is false.
-•	Block the account by sending the request, the profileId of the blocked account gets added to you “blockedAccounts” key. 
-•	The blocked person now cannot access your profile or posts. While blocking, make sure the 2nd person is removed from your followingList and followerList and bothe of them have a reduced count by 1. 
-•	On success send 200, and send the appropriate status code if error persists
+9)	PUT API – Unblock a profile.
+This API is the complete opposite of the block, but less complex. When a user is unblocked, you are able to see their details thoroughly. But then you need to go through the following process again, like the ‘Instagram’ of course.
 
 
-11) Unblock Api: profile/:profileId/unblock
-•	Authentication and Authorization is required.
-•	Make sure the profile exists in the db.
-•	Get the profileId of the person you want to block in the request body.
-•	Make sure the blocked Id exists in the db and isDeleted false.
-•	Splice the profileId of the blocked id from your blockedAccount’s array.
-•	Make sure they get to fetch your details after they get unblocked.
-•	On success send 200, and send the appropriate status code if error persists
 
+10)  PUT API – Liking a post.
+Each API has a ton of validations apart from the main validations being mentioned in the README, and this API might look like a small API to deal with but it really isn’t. If the post’s owner has blocked you, you will not be able to like or even view their post! But if not, then you are granted the permission to like their post. When liking a post, the post’s like’s list gets added with your data and the like’s count of that post gets increased by 1. The data is then updated in the cache memory.
 
 
 
+11) PUT API – Un-liking a post.
+This API is perhaps the complete opposite of the ‘liking a post’ API. Your name gets removed from the like’s list and the like’s count of that post is then reduced by 1. Block validations are taken care of. The updated data is then set to the cache memory.
 
 
 
+12) PUT API – To comment on a post.
+We have taken the postId we wish to comment on and the comment which needs to be posted on that particular post in the request body. Strict block validations are used. A user is free to comment on anybody’s post, but not anything. A user cannot post cuss words on somebody else’s post (not everything). The comment then along with the username of the person who has commented gets updated in the comment’s list of the post’s user and the comment’s count is increased by 1.
 
 
 
+13) DELETE API – Delete a comment.
+Pretty much deletes a comment but comes with heavy validations; if the user wants to delete comments on their own post, they are free to delete any comment. But if a user wants to delete a comment on somebody else’s post, they’re only allowed to delete only their own comment. This API also comes with strict block validations. After the comment is deleted, the comment’s count is reduced by one and the comment in the comment’s list which was supposed to be deleted, vanishes.
 
 
 
+14) POST API – Creating a post.
+This API has a ton of validations for each key being passed in the request body. Although only the image was kept mandatory, the location, and caption weren’t mandatory at all. AWS S3 is being used to upload pictures.
 
 
 
+15) GET API – Fetching post details.
+With strict validations, this API helps fetch the data of a particular post as shown exclusively on Instagram. Block validation has been taken care of. No cache was implemented here as fetching a post data would be a waste of cache memory, moreover the social media app such as Instagram doesn’t use cache to fetch details of other’s post.
 
 
 
-Post Controller –
+16) GET API – Fetching comment’s list of a post.
+The function of this API is to fetch the details of all the comments along with their comment’s count and to show the details in the response body. Block validation is taken care of. No cache was implemented here as fetching a post’s comment’s list would be a waste of cache memory, moreover the social media app such as Instagram doesn’t use cache to fetch details of other’s post’s comment’s list.
 
 
 
-12)	Create Post Api: post/create
-•	Create a post document from request body. Request body must contain image.
-•	Upload image to S3 bucket and save its public URL in user document.
-•	Handle edge cases like extra spaces in captions.
-•	On success send 201, and send the appropriate status code if error persists.
+17) GET API – Fetching the like’s list of a post.
+The function of this API is similar to that of the get comment’s list API; we’re trying to fetch the details of the like’s list of a post. Block validation is taken care of. No cache was implemented here as fetching a post’s like’s list would be a waste of cache memory, moreover the social media app such as Instagram doesn’t use cache to fetch details of other’s post’s like’s list.
 
-13)	Get Post Api: post/:profileId/getPost/:postId
-•	Fetch data of a post. Authentication required.
-•	Make sure that profileId exists in the db.
-•	Make sure that the post exists in the db and isDeleted is false.
-•	Blocked contact cannot access your details.
-•	Return the entire data in the request body.
-•	On success send 200, and send the appropriate status code if error persists.
 
 
+18) PUT API – Updating a post.
+There’s enough flexibility with this API. It allows to update or edit only the location or the caption of a post, probably the only two things one gets to edit on a post. 
 
 
-14)	Get Likes List Api: post/:profileId/getLikesList/:postId
-•	Authentication and Authorization is required.
-•	Check if profileId exists in the db.
-•	Check if post exists and isDeleted – false
-•	Blocked contact cannot access your details.
-•	Fetch the details of all the profiles who have liked the post.
-•	Your response structure should have the likesCount, and likesList.
-•	On success send 200, and send the appropriate status code if error persists.
 
+19) DELETE API – Deleting a post.
+This is a soft delete API, only the isDeleted keyword is set to true whenever the response is sent. You cannot delete somebody else’s post.
 
-15)	Get Comments List Api: post/:profileId/getCommentsList/:postId
-•	Authentication and Authorization is required.
-•	Check if profileId exists in the db.
-•	Check if post exists and isDeleted – false
-•	Blocked contact cannot access your details.
-•	Fetch the details of all the profiles who have commented on the post.
-•	Your response structure should have the commentsCount, and commentsList.
-•	On success send 200, and send the appropriate status code if error persists
 
 
+20) MIDDLEWARE – Authentication.
+This is a middleware API which uses a JWT function called ‘jwt.verify’, which probably verifies if the user has logged in and the jwt token generated after logging in is present or not. This middleware is used in almost 95% of the APIs.
 
-16)	Update Post Api: post/:profileId/updatePost/:postId
-•	Updates YOUR post.
-•	Authentication and Authorization is required.
-•	Ensure that profileId exists in the db and isDeleted is false.
-•	Ensure that postId exists in the db and isDeleted is false.
-•	Can only update caption, location and YOUR comments, only if the post is yours. 
-•	On success send 200, and send the appropriate status code if error persists.
 
 
+21) MIDDLEWARE – Authorization.
+This again is a middleware which confirms that the jwt token generated after logging in is that of the user trying to send the request to the server. So JWT Token has three sections including Header, Payload and the Signature. The user details are stored in the payload, especially the profileId (in this case). So, checking the profileId which sends the request to the server to the profileId in the payload of the jwt token is the so called ‘Authorization’. This middleware too has been used in 95% of the APIs.
 
-17)	Delete Comment Api: post/:profile/deleteComment/:commentId
-•	If the post is yours, then you can delete all the comments regardless of the user. But if the post is not yours, you can only delete your comment.
-•	Authentication and Authorization is required.
-•	Check if post exists.
-•	Check if comment exists.
-•	Splice it off.
-•	On success send 200, and send the appropriate status code if error persists.
 
-18)	Delete Post Api: post/:profile/deletePost/:postId
-•	If the post is yours, then you can delete the post.
-•	Authentication and Authorization is required.
-•	Check if post exists.
-•	Check if the post is of the same user as in the params.
-•	On success send 200, and send the appropriate status code if error persists.
-
-
-
-
-
-
-
-
+ In conclusion, although not fancy, but this is a genuine backend handle of a social medial platform. Took us around 6 days to build it.
+ Thanks for reading, cheers! 
+ 
+                                                                                                            - Shivani and Aashrun
 
 
 
