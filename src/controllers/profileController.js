@@ -377,7 +377,7 @@ const updateProfile = async function (req, res){
 
        if (!profileId) return res.status(400).send({ status: false, msg: "Please mention profileId in params" })
        if(!idMatch(profileId))return res.status(400).send({ status: false, msg: "Invalid profile Id" })
-       let Profile = await profileModel.findOne({ _id: profileId ,isDeleted:false})      
+       let Profile = await profileModel.findOne({ _id: profileId, isDeleted: false})      
        if (!Profile) return res.status(404).send({ status: false, msg: "No such profile found" })
 
       
@@ -451,7 +451,7 @@ const updateProfile = async function (req, res){
 }
 
 
-    let updated = await profileModel.findOneAndUpdate({_id:profileId},data,{new:true})
+    let updated = await profileModel.findOneAndUpdate({_id:profileId},{$set:{data}},{new:true})
 
     if(updated){
         await SET_ASYNC(`${updated._id}`, JSON.stringify(updated))
@@ -559,21 +559,22 @@ const deleteProfile = async function (req, res) {
 
 
 
+
+
 //=======================================  Following a profile  =========================================//
 
 const followProfile = async function (req, res){
     try{
-        let profileId = req.params.profileId
-        let data = req.body
-        let personToFollow = data.profileId
-        
 
+        let profileId = req.params.profileId
+        let personToFollow = req.body.profileId
+        
         if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
-        let profile = await profileModel.findOne({ _id: profileId, isDeleted:false})      
+        let profile = await profileModel.findOne({ _id: profileId, isDeleted:false})  
        if (!profile) return res.status(404).send({ status: false, msg: "No such profile found" })
 
 
-        if(!emptyBody(data)) return res.status(400).send({status: false, message: "Please provide the profileId you want to follow!"})
+        if(!personToFollow) return res.status(400).send({status: false, message: "Please provide the profileId you want to follow!"})
 
 
         if (!isValid(personToFollow)) return res.status(400).send({status: false, message: "Please enter a profileId!"}) 
@@ -584,16 +585,6 @@ const followProfile = async function (req, res){
         let bodyProfileId = await profileModel.findOne({ _id: personToFollow, isDeleted: false})      
        if (!bodyProfileId) return res.status(404).send({ status: false, msg: "The profile you wish to follow doesn't exist!" })
        
-
-
-       let alreadyFollowed = bodyProfileId.followerList
-       for(let j=0; j<alreadyFollowed.length; j++){
-        if(alreadyFollowed[j]._id == profileId){
-            return res.status(403).send({status: false, message: `You have already followed ${bodyProfileId.userName}!`})
-        }
-       }
-
-
        let block = bodyProfileId.blockedAccs
        for(let i=0; i<block.length; i++){
         if(block[i]._id == profileId){
@@ -601,29 +592,46 @@ const followProfile = async function (req, res){
         }
        }
 
+       let alreadyFollowed = bodyProfileId.followerList
+       for(let i=0; i<alreadyFollowed.length; i++){
+        if(alreadyFollowed[i]._id == profileId){
+            return res.status(403).send({status: false, message: `You have already followed ${bodyProfileId.userName}!`})
+        }
+       }
        
-       let otherFollowerList = bodyProfileId.followerList
-       let ourFollowingList = profile.followingList
+       let update = {}
 
-       let ourObj = {}
-       ourObj["_id"] = profile["_id"]
-       ourObj["userName"] = profile["userName"]
-       ourObj["fullName"] = profile["fullName"]
+       let FollowerList = bodyProfileId.followerList
+    
+       let newFollower = {}
+       newFollower["_id"] = profile["_id"]
+       newFollower["userName"] = profile["userName"]
+       newFollower["fullName"] = profile["fullName"]
 
-       otherFollowerList.push(ourObj)
-      let newData = bodyProfileId.followerCount + 1
+       FollowerList.push(newFollower)
+       update["followerList"] = FollowerList
+
+      update["followerCount"] = bodyProfileId.followerCount + 1
       
-       await profileModel.findOneAndUpdate({_id: personToFollow}, {$set: {followerList: otherFollowerList, followerCount: newData}})
+      let updated =  await profileModel.findOneAndUpdate({_id: personToFollow},update)
+       await SET_ASYNC(`${updated._id}`, JSON.stringify(updated))  
 
-       let otherObj = {}
-       otherObj["_id"] = bodyProfileId["_id"]
-       otherObj["userName"] = bodyProfileId["userName"]
-       otherObj["fullName"] = bodyProfileId["fullName"]
+       let update2 = {}
+       let FollowingList = bodyProfileId.followingList
+       let newFollowing = {}
 
-       ourFollowingList.push(otherObj)
-       let latestData = profile.followingCount + 1
+       newFollowing["_id"] = bodyProfileId["_id"]
+       newFollowing["userName"] = bodyProfileId["userName"]
+       newFollowing["fullName"] = bodyProfileId["fullName"]
 
-       await profileModel.findOneAndUpdate({_id: profileId}, {$set: {followingList: ourFollowingList, followingCount: latestData}})
+       FollowingList.push(newFollowing)
+
+       update2["followingList"] = FollowingList
+       update2["followingCount"] = profile.followingCount + 1
+       
+
+     let updated2 =   await profileModel.findOneAndUpdate({_id: profileId},update2)
+       await SET_ASYNC(`${updated2._id}`, JSON.stringify(updated2)) 
 
        return res.status(200).send({status: true, message: `You're now following ${bodyProfileId.userName}.`})
 
@@ -641,26 +649,24 @@ const followProfile = async function (req, res){
 
 
 
+//========================================  Unfollowing a user  ============================================ //
 
-
-
-
-
-//==================================== Unfollowing a profile  ===========================================//
 
 const unfollowProfile = async function (req, res){
     try{
         let profileId = req.params.profileId
-        let data = req.body
-        let personToUnfollow = data.profileId
+        let personToUnfollow = req.body.profileId
+        
         
 
         if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
-        let profile = await profileModel.findOne({ _id: profileId, isDeleted:false})      
+        let profile = await profileModel.findOne({ _id: profileId, isDeleted:false}) 
+       
+        // console.log(profile)     
        if (!profile) return res.status(404).send({ status: false, msg: "No such profile found" })
 
 
-        if(!emptyBody(data)) return res.status(400).send({status: false, message: "Please provide the profileId you want to follow!"})
+        if(!personToUnfollow) return res.status(400).send({status: false, message: "Please provide the profileId you want to follow!"})
 
 
         if (!isValid(personToUnfollow)) return res.status(400).send({status: false, message: "Please enter a profileId!"}) 
@@ -668,7 +674,8 @@ const unfollowProfile = async function (req, res){
 
         if(profileId == personToUnfollow) return  res.status(400).send({ status: false, message: "You cannot unfollow yourself, lol." }) 
 
-        let bodyProfileId = await profileModel.findOne({ _id: personToUnfollow, isDeleted: false})      
+        let bodyProfileId = await profileModel.findOne({ _id: personToUnfollow, isDeleted: false}) 
+        
        if (!bodyProfileId) return res.status(404).send({ status: false, msg: "The profile you wish to follow doesn't exist!" })
        
 
@@ -680,38 +687,42 @@ const unfollowProfile = async function (req, res){
         }
        }
 
+       //removing from others followers list
+    
+       let followerList = bodyProfileId.followerList
+       for(let i=0;i<followerList.length;i++){
+           
 
-       let otherFollowerList = bodyProfileId.followerList
-
-       for(let j=0; j<otherFollowerList.length; j++){
-        if(otherFollowerList[j]._id != profileId){
-            return res.status(403).send({status: false, message: `You cannot unfollow ${bodyProfileId.userName} because you do not exist in their follower's list!`})
-        }else{
-            otherFollowerList.splice(j, 1)
-            let followerCount = bodyProfileId.followerCount - 1
-
-            await profileModel.findOneAndUpdate({_id: personToUnfollow}, {$set: {followerList: otherFollowerList, followerCount: followerCount}})
-        }
+        if(followerList[i].userName == profile.userName){
+           followerList.splice(i,1)
+          let followerCount = bodyProfileId.followerCount - 1
+          let updated =  await profileModel.findOneAndUpdate({_id: personToUnfollow}, {followerList: followerList, followerCount: followerCount})
+          await SET_ASYNC(`${updated._id}`, JSON.stringify(updated)) 
+          break;
        }
+     
+    }
+      // removing from own following list
 
-       let myFollowing = profile.followingList
-       for(let a = 0; a<myFollowing.length; a++){
-        if(myFollowing[a]._id == bodyProfileId){
-            myFollowing.splice(a, 1)
-            let myFollowingCount = profile.followingCount - 1 
-
-            await profileModel.findOneAndUpdate({_id: profileId}, {$set: {followingList: myFollowing, followingCount: myFollowingCount}})
+       let followingList = profile.followingList
+       for(let a = 0; a<followingList.length; a++){
+        if(followingList[a].userName == bodyProfileId.userName){
+            followingList.splice(a, 1)
+            
+    let followingCount = profile.followingCount -1
+        
+    let updated2 =    await profileModel.findOneAndUpdate({_id: profileId}, {followingList: followingList, followingCount: followingCount})
+       await SET_ASYNC(`${updated2._id}`, JSON.stringify(updated2)) 
+       return res.status(200).send({status: true, message: `You have unfollowed ${bodyProfileId.userName}.`})
         }
     }
 
-       return res.status(200).send({status: true, message: `You have unfollowed ${bodyProfileId.userName}.`})
-
+     return res.status(200).send({status: true, message: `You have not followed ${bodyProfileId.userName}.`})
 
     }catch(error){
         return res.status(500).send({status: false, message: error.message})
     }
 }
-
 
 
 
@@ -829,6 +840,8 @@ const blockProfile = async function(req, res){
     }
     
  }
+
+
 
 
 
@@ -1162,4 +1175,88 @@ const unlikePost = async function (req, res) {
 
 
 
-module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, unfollowProfile, blockProfile, unblockProfile, commentOnPost, deleteComment, likePost, unlikePost}
+//======================================= Fetching followers/following list  =========================================// 
+
+const followerOrFollowingList = async function (req, res){
+    try{
+        let profileId = req.params.profileId
+        let body = req.body
+        let {otherProfileId, list} = body
+
+        if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId in the params!"})
+        let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
+        if(!profile) return res.status(404).send({status: false, message: "ProfileId in the params was not found!"})
+
+        if(!list) return res.status(400).send({status: false, message: "The 'list' keyword is mandatory in order to fetch what kind of details you want to fetch!"})
+        if(!["followerList", "followingList"].includes(list)) return res.status(400).send({status: false, message: "The 'list' keyword should have 'followerList' or 'followingList' as inputs only."})
+
+        if(otherProfileId){
+            if(!idMatch(otherProfileId)) return res.status(400).send({status: false, message: "Invalid profileId in the body!"})
+            if(!isValid(otherProfileId)) return res.status(400).send({status: false, message: "ProfileId in the body cannot be empty!"})
+            let otherProfile = await profileModel.findOne({_id: otherProfileId, isDeleted: false})
+            if(!otherProfile) return res.status(404).send({status: false, message: "ProfileId in the body was not found!"})
+
+            let block = otherProfile.blockedAccs
+            for(let i=0; i<block.length; i++){
+                if(block[i]._id == profileId){
+                    return res.status(403).send({status: false, message: "This action is forbidden as the other user has blocked you!"})
+                }
+            }
+
+
+            if(list == "followerList"){
+                let obj = {}
+                obj["followerCount"] = otherProfile["followerCount"]
+                obj["followerList"] = otherProfile["followerList"]
+
+                return res.status(200).send({status: true, message: `The followerList of ${otherProfile.userName} is listed below.`, data: obj})
+
+            }
+
+            if(list == "followingList"){
+                let obj = {}
+                obj["followingCount"] = otherProfile["followingCount"]
+                obj["followingList"] = otherProfile["followingList"]
+
+                return res.status(200).send({status: true, message: `The followingList of ${otherProfile.userName} is listed below.`, data: obj})
+
+            }
+
+            
+        }else{
+            if(list == "followerList"){
+                let obj = {}
+                obj["followerCount"] = profile["followerCount"]
+                obj["followerList"] = profile["followerList"]
+
+                return res.status(200).send({status: true, message: `Your followerList is as follows:`, data: obj})
+
+            }
+
+            if(list == "followingList"){
+                let obj = {}
+                obj["followingCount"] = profile["followingCount"]
+                obj["followingList"] = profile["followingList"]
+
+                return res.status(200).send({status: true, message: `Your followingList is as follows:`, data: obj})
+
+            }
+        }
+
+
+    }catch(error){
+        res.status(500).send({message: error.message})
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, unfollowProfile, blockProfile, unblockProfile, commentOnPost, deleteComment, likePost, unlikePost, followerOrFollowingList}

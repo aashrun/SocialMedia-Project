@@ -199,7 +199,7 @@ const getLikesList = async function (req,res){
         let postId = req.params.postId
 
         if(!idMatch(profileId)) return res.status(400).send({status: false, message: "Invalid profileId!"})
-        let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
+        let profile = await profileModel.findOne({_id: profileId, isDeleted: false}) 
         if(!profile) return res.status(404).send({status: false, message: "No such profileId exists."})
 
 

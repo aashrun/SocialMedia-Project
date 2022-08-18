@@ -35,6 +35,8 @@ router.put("/profile/:profileId/like", MW.authentication, MW.authorization, prof
 
 router.put("/profile/:profileId/unlike", MW.authentication, MW.authorization, profileController.unlikePost)
 
+router.get("profile/:profileId/followerOrFollowingList", profileController.followerOrFollowingList)
+
 
 
 //====================================  Post Handlers  =========================================//
