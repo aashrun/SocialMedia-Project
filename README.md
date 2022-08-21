@@ -146,7 +146,7 @@ This is a middleware API which uses a JWT function called ‘jwt.verify’, whic
 This again is a middleware which confirms that the jwt token generated after logging in is that of the user trying to send the request to the server. So JWT Token has three sections including Header, Payload and the Signature. The user details are stored in the payload, especially the profileId (in this case). So, checking the profileId which sends the request to the server to the profileId in the payload of the jwt token is the so called ‘Authorization’. This middleware too has been used in 95% of the APIs.
 
 
- ### In conclusion, although not fancy, but this is a genuine backend handle of a social medial platform. Took us around 6 days to build it.
+ ### In conclusion, although not fancy, but this is a genuine backend handle of a social media platform.
  ### Thanks for reading, cheers!
  
                                                                                                           - Shivani and Aashrun
