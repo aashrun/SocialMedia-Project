@@ -5,6 +5,7 @@ Along with a few complex logics been put into this project, we have tried to inc
 
 
 1)	**POST API – Creating a profile.**
+   
 A profile is created on the Social Media platform whilst handling many validations like ‘age should be more than 13’, the username should be unique etc. Some fields have not been kept mandatory, like the profile image, bio and location. A user is then successfully able to create a profile on the social media platform.
 
 
