@@ -1266,8 +1266,8 @@ const getBlockedAccount = async function(req, res){
         let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
         
         if (!profile) return res.status(404).send({status: false, message: "No such profile found."})
-        count = profile["blockedAccs"].length
-        console.log(count)
+
+       let count = profile["blockedAccs"].length
         if(count == 0){return res.status(404).send({status: true, message: "You haven't blocked anybody yet."}) }
         else{
         let obj = {}
