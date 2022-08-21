@@ -1,4 +1,4 @@
-__Social Media Project’s README__
+##Social Media Project’s README
 
 
 
