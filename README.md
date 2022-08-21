@@ -91,6 +91,10 @@ This API either fetches follower's list or following's list depending upon the v
 
 
 
+### 15) GET API - Fetching Blocked Accounts' list.
+
+Essentially fetches the details of one's own blocked account's list. If the user hits the request, they will be shown the list of all the users they've blocked along with the count of the number of people blocked in the response body.
+
 
 ## POST APIs
 
