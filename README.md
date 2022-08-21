@@ -1,10 +1,10 @@
-Social Media Project’s README
+__Social Media Project’s README__
 
 Along with a few complex logics been put into this project, we have tried to incorporate AWS S3 services along with Cache (Redis precisely) which has made the experience of this project surreal! This project consists of 21 APIs and is a thorough backend handle of a social media platform famously known as “Instagram”. Hope you enjoy reading this README and benefit from it! 😊
 
 
 
-1)	POST API – Creating a profile.
+1)	**POST API – Creating a profile.**
 A profile is created on the Social Media platform whilst handling many validations like ‘age should be more than 13’, the username should be unique etc. Some fields have not been kept mandatory, like the profile image, bio and location. A user is then successfully able to create a profile on the social media platform.
 
 
