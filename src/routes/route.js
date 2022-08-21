@@ -23,24 +23,26 @@ router.put("/profile/:profileId/follow", profileController.followProfile)
 
 router.put("/profile/:profileId/unfollow", profileController.unfollowProfile)
 
-router.put("/profile/:profileId/block", MW.authentication, MW.authorization, profileController.blockProfile)
+router.put("/profile/:profileId/block",  profileController.blockProfile)
 
 router.put("/profile/:profileId/unblock", MW.authentication, MW.authorization, profileController.unblockProfile)
 
 router.put("/profile/:profileId/comment",  profileController.commentOnPost)
 
-router.delete("/profile/:profileId/deleteComment", MW.authentication, MW.authorization, profileController.deleteComment)
+router.delete("/profile/:profileId/deleteComment", profileController.deleteComment)
 
 router.put("/profile/:profileId/like", MW.authentication, MW.authorization, profileController.likePost)
 
 router.put("/profile/:profileId/unlike", MW.authentication, MW.authorization, profileController.unlikePost)
 
-router.get("profile/:profileId/followerOrFollowingList", profileController.followerOrFollowingList)
+router.get("/profile/:profileId/followerOrFollowingList", profileController.followerOrFollowingList)
+
+router.get("/profile/:profileId/getBlockedAccount", profileController.getBlockedAccount)
 
 
 
 //====================================  Post Handlers  =========================================//
-router.post("/post/create", MW.authentication, MW.authorization, postController.createPost)
+router.post("/post/create",  postController.createPost)
 
 router.get("/post/:profileId/getPost/:postId", MW.authentication, MW.authorization, postController.getPost)
 

@@ -761,7 +761,7 @@ const blockProfile = async function(req, res){
     let existingBlocked = user.blockedAccs
     for (let i =0;i<existingBlocked.length;i++){
       if(existingBlocked[i]._id == userToBeBLocked){
-        return res.status(400).send({ status: false, message: "Profile already blocked!" })
+        return res.status(400).send({ status: false, message: `${blocked.userName} is already blocked!`})
       }
     }
     let update = {}
@@ -863,7 +863,7 @@ const unblockProfile = async function (req, res) {
         let userProfileId = req.params.profileId
         let userToUnblock = req.body.profileId
 
-        if (userProfileId == userTounBlock) return res.status(400).send({ status: false, message: "Invalid request!" })
+        if (userProfileId == userToUnblock) return res.status(400).send({ status: false, message: "Invalid request!" })
 
         if(!idMatch(userProfileId)) return res.status(400).send({status: false, message: "The profileId in the params is invalid!"})
         if(!idMatch(userToUnblock)) return res.status(400).send({status: false, message: "The profileId in the body is invalid!"})
@@ -887,7 +887,7 @@ const unblockProfile = async function (req, res) {
 
         }
 
-        return res.status(404).send({ status: false, message: "You are not in the blocked list" }) 
+        return res.status(404).send({ status: false, message: `${unblock.userName} is not in the blocked list` }) 
 
 
     } catch (err) {
@@ -930,14 +930,6 @@ const commentOnPost = async function (req, res){
 
         if(!comment) return res.status(400).send({status: false, message: " 'Comment' cannot be empty!"})
         if(!isValid(comment)) return res.status(400).send({status: false, message: "Please provide with a comment!"})
-
-        let cussArray = ["Fuck", "fuck", "Motherfucker", "motherfucker", "asshole", "Asshole"]
-        let arr = comment.split(" ")
-        for(let k=0; k<arr.length; k++){
-            if(arr[k].includes(cussArray)){
-                return res.status(403).send({status: false, message: 'No cuss words allowed!'})
-            }
-        }
 
         let profileOfPost = await profileModel.findOne({_id: postCheck.profileId, isDeleted: false})
         if(!profileOfPost) res.status(403).send({status: false, message: "The account owner of this post was not found or is deleted. "})
@@ -1196,10 +1188,12 @@ const followerOrFollowingList = async function (req, res){
             let otherProfile = await profileModel.findOne({_id: otherProfileId, isDeleted: false})
             if(!otherProfile) return res.status(404).send({status: false, message: "ProfileId in the body was not found!"})
 
+            if(profileId == otherProfileId) return res.status(400).send({status: false, message: "You cannot give the profileId the same as the otherProfileId!"})
+
             let block = otherProfile.blockedAccs
             for(let i=0; i<block.length; i++){
                 if(block[i]._id == profileId){
-                    return res.status(403).send({status: false, message: "This action is forbidden as the other user has blocked you!"})
+                    return res.status(403).send({status: false, message: `This action is forbidden as ${otherProfile.userName} has blocked you!`})
                 }
             }
 
@@ -1259,4 +1253,45 @@ const followerOrFollowingList = async function (req, res){
 
 
 
-module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, unfollowProfile, blockProfile, unblockProfile, commentOnPost, deleteComment, likePost, unlikePost, followerOrFollowingList}
+
+
+
+//========================================  Fetching Blocked acc's list  ======================================//
+
+const getBlockedAccount = async function(req, res){
+    try{
+        let profileId = req.params.profileId
+        
+        if (!idMatch(profileId)) return res.status(400).send({status: false, message: "Please enter a valid profileId in params!"})
+        let profile = await profileModel.findOne({_id: profileId, isDeleted: false})
+        
+        if (!profile) return res.status(404).send({status: false, message: "No such profile found."})
+        count = profile["blockedAccs"].length
+        console.log(count)
+        if(count == 0){return res.status(404).send({status: true, message: "You haven't blocked anybody yet."}) }
+        else{
+        let obj = {}
+        obj["blockedAccountCount"]  = count
+        obj["blockedAccounts"] = profile["blockedAccs"]
+       
+        
+        return res.status(200).send({status: false, message: `Your blocked account's list is as follows: `, data: obj})
+        }
+      }
+      catch(error){
+        res.status(500).send({message: error.message})
+        
+    }
+    }
+
+
+
+
+
+
+
+
+
+
+
+module.exports = {createProfile, loginUser, getProfile, updateProfile, deleteProfile, followProfile, unfollowProfile, blockProfile, unblockProfile, commentOnPost, deleteComment, likePost, unlikePost, followerOrFollowingList, getBlockedAccount}

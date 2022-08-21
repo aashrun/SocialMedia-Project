@@ -32,7 +32,7 @@ const createPost = async function (req, res){
 
         let uploadedFileURL = await upload.uploadFile(files[0])
         data.image = uploadedFileURL;
-        if (!profileImageCheck(data.image)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
+        //if (!profileImageCheck(data.image)) return res.status(400).send({ status: false, message: "Please provide profileImage in correct format like jpeg, png, jpg, gif, bmp etc" })
 
 
         if(caption){
