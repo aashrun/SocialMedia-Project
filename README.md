@@ -2,7 +2,7 @@
 
 
 
-**Along with a few complex logics been put into this project, we have tried to incorporate AWS S3 services along with Cache (Redis precisely) which has made the experience of this project surreal! This project consists of 23 APIs and is a thorough backend handle of a social media platform famously known as “Instagram”. Hope you enjoy reading this README and benefit from it! 😊**
+**With a decent (or even high) complexity of logic which has been displayed in this project, we have tried to incorporate AWS S3 services along with Cache (Redis precisely) which has made the experience of this project surreal! This project consists of 23 APIs and is a thorough backend handle of a social media platform famously known as “Instagram”. Hope you enjoy reading this README and benefit from it! 😊**
 
 
 ## PROFILE APIs
