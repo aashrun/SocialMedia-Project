@@ -149,7 +149,7 @@ This again is a middleware which confirms that the jwt token generated after log
  ### In conclusion, although not fancy, but this is a genuine backend handle of a social media platform.
  ### Thanks for reading, cheers!
  
-                                                                                                          - Shivani and Aashrun
+                                                        - Shivani and Aashrun
 
 
 
