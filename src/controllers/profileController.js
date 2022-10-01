@@ -451,7 +451,7 @@ const updateProfile = async function (req, res){
 }
 
 
-    let updated = await profileModel.findOneAndUpdate({_id:profileId},{$set:{data}},{new:true})
+    let updated = await profileModel.findOneAndUpdate({_id:profileId},{$set:data},{new:true})
 
     if(updated){
         await SET_ASYNC(`${updated._id}`, JSON.stringify(updated))
