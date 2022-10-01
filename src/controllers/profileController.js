@@ -617,7 +617,7 @@ const followProfile = async function (req, res){
        await SET_ASYNC(`${updated._id}`, JSON.stringify(updated))  
 
        let update2 = {}
-       let FollowingList = bodyProfileId.followingList
+       let FollowingList = profile.followingList
        let newFollowing = {}
 
        newFollowing["_id"] = bodyProfileId["_id"]
