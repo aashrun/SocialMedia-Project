@@ -1,12 +1,17 @@
 const aws= require("aws-sdk")
 
 
-aws.config.update({
-    accessKeyId: "AKIAY3L35MCRVFM24Q7U",
-    secretAccessKey: "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",
-    region: "ap-south-1"
+// aws.config.update({
+//     accessKeyId: "AKIAY3L35MCRVFM24Q7U",
+//     secretAccessKey: "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",
+//     region: "ap-south-1"
    
-})
+// })
+aws.config.update({
+    accessKeyId: "AKIAY3L35MCRZNIRGT6N",
+    secretAccessKey: "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",
+    region: "ap-south-1"
+});
 
 let uploadFile= async (file) =>{
    return new Promise( function(resolve, reject) {
